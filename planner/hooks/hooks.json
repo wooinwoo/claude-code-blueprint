@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const i=JSON.parse(d);const f=i.tool_input?.file_path||'';if(/plans\\/.*\\.md$/.test(f.replace(/\\\\\\\\/g,'/'))){const c=i.tool_input?.content||'';const issues=[];if(!/작성일|date/i.test(c))issues.push('문서에 작성일 누락');if(!/상태|status/i.test(c))issues.push('문서에 상태(Draft/Approved) 누락');if(issues.length){console.error('[Doc Format] 문서 포맷 경고:');issues.forEach(i=>console.error('  - '+i))}}}catch{}console.log(d)})\""
+          }
+        ],
+        "description": "Check document format: warn about missing date/status in plans/ documents"
+      }
+    ]
+  }
+}
