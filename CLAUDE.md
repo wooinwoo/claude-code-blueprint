@@ -134,21 +134,21 @@ jira, github, context7, memory, figma, playwright (mysql/aws 제거)
 
 `setup.ps1 planner` — PM/기획 전문 프로필. 개발 도구 최소화, 리서치/문서 도구 중심.
 
-### Agents — 4개
+### Agents — 3개
 
-**Planner (4)**: product-strategist, market-researcher, ux-researcher, content-writer
+**Planner (3)**: researcher-strategist(시장분석+전략 통합), ux-researcher, content-writer
 
-### Commands — 9개
+### Commands — 11개
 
-**Planner (9)**: prd, roadmap, research, competitive-analysis, okr, sprint-plan, retro, story-map, launch
+**Planner (11)**: prd, roadmap, research, competitive-analysis, okr, sprint-plan, retro, story-map, launch, weekly-update, spec
 
 ### Rules — 3개
 
 **Planner (3)**: document-format, research-methodology, prioritization
 
-### Skills — 6개
+### Skills — 2개
 
-**Base (7)** + **Planner (6)**: pm-discovery, pm-strategy, pm-execution, business-frameworks, stakeholder-communication, deep-research
+**Base (7)** + **Planner (2)**: business-frameworks, stakeholder-communication
 
 ### Contexts — 5개
 

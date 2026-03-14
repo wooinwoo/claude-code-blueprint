@@ -89,10 +89,10 @@ AskUserQuestion({
 
 ### Phase 2: OKR 초안 생성
 
-#### 2-1. product-strategist 에이전트 OKR 설계
+#### 2-1. researcher-strategist 에이전트 OKR 설계
 
 ```typescript
-okr_draft = Agent("product-strategist", `
+okr_draft = Agent("researcher-strategist", `
 팀 OKR을 설계해줘.
 
 미션/전략:
@@ -183,7 +183,7 @@ if (okr.objectives.length < 3 || okr.objectives.length > 5) {
 
 ```typescript
 if (!all_valid) {
-  // product-strategist에게 수정 요청
+  // researcher-strategist에게 수정 요청
   // 검증 통과할 때까지 반복 (최대 2회)
   console.log("OKR 품질 기준 미달. 수정 중...")
 }
@@ -595,7 +595,7 @@ if (!upper_okr) {
 ### 예시 1: OKR 생성
 ```
 /okr create
-→ 전략 문서 스캔 → 미션 질문 → product-strategist 설계 → 품질 검증 → 저장
+→ 전략 문서 스캔 → 미션 질문 → researcher-strategist 설계 → 품질 검증 → 저장
 → plans/okr-2026-Q2.md
 ```
 

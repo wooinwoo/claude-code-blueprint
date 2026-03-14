@@ -198,7 +198,7 @@ state.scored_items = adjusted_items
 ### Phase 3: 전략 에이전트
 
 ```typescript
-Agent("product-strategist", `
+Agent("researcher-strategist", `
   분기 로드맵의 전략적 배치를 결정하세요.
 
   ## 입력 데이터

@@ -130,7 +130,7 @@ AskUserQuestion([
     question: "배경 데이터 수집을 위한 리서치를 실행할까요?",
     header: "리서치",
     options: [
-      { label: "예 — 시장/경쟁 리서치", description: "market-researcher 에이전트가 시장 데이터 수집 (1-2분)" },
+      { label: "예 — 시장/경쟁 리서치", description: "researcher-strategist 에이전트가 시장 데이터 수집 (1-2분)" },
       { label: "예 — 사용자 리서치", description: "ux-researcher 에이전트가 사용자 니즈 분석 (1-2분)" },
       { label: "건너뛰기", description: "바로 PRD 초안 작성으로" }
     ]
@@ -142,8 +142,8 @@ AskUserQuestion([
 
 ```typescript
 if (user_chose_market) {
-  // market-researcher 에이전트 호출
-  research_result = Agent("market-researcher", `
+  // researcher-strategist 에이전트 호출
+  research_result = Agent("researcher-strategist", `
     다음 기능에 대한 시장 배경 데이터를 수집하세요.
 
     기능: ${feature_name}

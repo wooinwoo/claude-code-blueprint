@@ -253,7 +253,7 @@ AskUserQuestion({
 ### Phase 5: 스프린트 목표 생성
 
 ```typescript
-sprint_goal = Agent("product-strategist", `
+sprint_goal = Agent("researcher-strategist", `
 다음 스프린트에 포함된 이슈를 분석하여 스프린트 목표를 생성해줘.
 
 선정 이슈:

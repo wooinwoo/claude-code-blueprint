@@ -136,10 +136,10 @@ if (analysis_mode === "feature_focus") {
 }
 ```
 
-### 2-2. market-researcher 에이전트 데이터 가공
+### 2-2. researcher-strategist 에이전트 데이터 가공
 
 ```typescript
-structured_data = Agent("market-researcher", `
+structured_data = Agent("researcher-strategist", `
 다음 웹 검색 결과를 경쟁사별로 구조화해줘.
 
 원시 데이터:
@@ -253,10 +253,10 @@ if (analysis_mode === "feature_focus") {
 
 ## Phase 4: 분석
 
-### 4-1. product-strategist 에이전트 전략 분석
+### 4-1. researcher-strategist 에이전트 전략 분석
 
 ```typescript
-analysis_result = Agent("product-strategist", `
+analysis_result = Agent("researcher-strategist", `
 다음 경쟁 분석 데이터를 기반으로 전략 분석을 수행해줘.
 
 우리 제품 정보:

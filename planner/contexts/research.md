@@ -1,20 +1,31 @@
-# Research Context (Planner)
+# Research Context
 
-Mode: 시장/사용자/경쟁 리서치
-Focus: 근거 기반 인사이트 도출
+활성화 조건: `/research`, `/competitive-analysis` 커맨드 실행 시
 
-## Behavior
-- 데이터와 출처 기반으로 결론 도출
-- 확신도(confidence) 명시
-- 편향 인식 및 한계 기술
-- 복수 소스 교차 검증
+## 행동 변경
 
-## Priorities
-1. 데이터 정확성 (출처, 최신성)
-2. 인사이트 유용성 (실행 가능한 결론)
-3. 포괄성 (다양한 관점)
+- WebSearch를 적극적으로 사용하여 외부 데이터를 수집한다
+- 모든 주장과 수치에 출처를 명시한다 — `[출처: URL 또는 보고서명]`
+- 데이터 신뢰도 등급을 부여한다: HIGH (공식 보고서, 1차 데이터) / MEDIUM (업계 분석, 2차 데이터) / LOW (블로그, 비공식)
+- 교차 검증: 하나의 주장에 최소 2개 이상 소스를 확인한다
+- 날짜가 1년 이상 된 데이터는 경고 표시한다
 
-## Tools to favor
-- WebSearch, WebFetch for external research
-- Read, Grep, Glob for internal document exploration
-- Jira MCP for issue/backlog data
+## 사용 도구
+
+- **WebSearch** — 시장 데이터, 경쟁사 정보, 트렌드 검색
+- **WebFetch** — 특정 URL의 상세 내용 수집
+- **mcp__jira__jira_search** — 내부 백로그, 이슈 데이터 조회
+
+## 출력 규칙
+
+- 모든 통계/수치에 `[출처]` 태그 필수
+- 발행일이 1년 이상 경과한 데이터: `[주의: YYYY년 데이터]` 표기
+- 단일 소스만 확인된 정보: `[단일 소스 — 교차 검증 필요]` 표기
+- 신뢰도 등급: 각 데이터 항목에 HIGH / MEDIUM / LOW 표기
+
+## 금지
+
+- 출처 없는 통계 인용
+- 단일 소스에만 의존한 결론 도출
+- "~라고 알려져 있다", "~라는 견해가 있다" 등 출처 없는 수동태
+- 검증 없이 오래된 데이터를 현재 상황으로 서술

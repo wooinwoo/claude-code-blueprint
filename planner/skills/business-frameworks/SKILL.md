@@ -1,67 +1,69 @@
 ---
 name: business-frameworks
-description: Use this skill when applying business analysis frameworks. Includes SWOT, Porter's Five Forces, Jobs-to-be-Done, Value Proposition Canvas, and more.
+description: 비즈니스 프레임워크 선택 가이드. 상황별 추천, 오용 패턴, 빠른 판단 규칙.
 ---
 
 # Business Frameworks Skill
 
-비즈니스 분석 프레임워크 모음. 상황에 맞는 프레임워크 선택 및 적용 가이드.
+프레임워크 자체가 아니라 **언제, 어떤 프레임워크를 쓸지** 판단하는 스킬.
+Claude는 이미 SWOT, Porter's, RICE 등을 알고 있다. 이 스킬은 선택과 오용 방지에 집중한다.
 
 ## When to Activate
 
-- 비즈니스 상황 분석
-- 전략적 의사결정
-- 제안서/보고서 작성 시 프레임워크 필요
-- 새로운 시장/기회 평가
+- 비즈니스 분석 시 프레임워크 선택이 필요할 때
+- 분석 결과의 신뢰성을 검증할 때
+- 경영진/투자자 보고용 분석 구조화
 
-## Framework Catalog
+## Framework Selection Matrix
 
-### SWOT Analysis
-| | 유리 | 불리 |
-|---|---|---|
-| **내부** | Strengths | Weaknesses |
-| **외부** | Opportunities | Threats |
+| 상황 | 추천 프레임워크 | 이유 | 흔한 오용 |
+|------|---------------|------|-----------|
+| 신규 시장 진입 판단 | TAM-SAM-SOM + Porter's 5 Forces | 시장 크기 + 경쟁 강도 동시 파악 | TAM만 보고 진입 결정 (SOM 무시) |
+| 기능 우선순위 | RICE | 객관적 수치 기반 | Confidence를 항상 HIGH로 넣는 자기기만 |
+| 제품 전략 수립 | Lean Canvas + JTBD | 가설 기반 + 사용자 관점 | Canvas 칸 채우기에 급급, 검증 계획 없음 |
+| 경쟁 분석 | SWOT + 기능 매트릭스 | 정성 + 정량 결합 | 자사 S만 크고 W가 비어있는 편향 |
+| 의사결정 | Decision Matrix (가중치) | 기준별 점수화 | 가중치를 결론에 맞춰 역산 |
+| 시장 포지셔닝 | 포지셔닝 맵 (2x2) | 차별화 포인트 시각화 | 축 선택이 자의적 |
 
-### Porter's Five Forces
-1. 기존 경쟁자 간 경쟁
-2. 신규 진입자 위협
-3. 대체재 위협
-4. 공급자 교섭력
-5. 구매자 교섭력
+## Framework Abuse Patterns
 
-### Jobs-to-be-Done (JTBD)
-```markdown
-When I [상황],
-I want to [동기],
-So I can [기대 결과].
-```
+Claude가 빠지기 쉬운 함정 4가지:
 
-### Value Proposition Canvas
-- **Customer Profile**: Jobs, Pains, Gains
-- **Value Map**: Products/Services, Pain Relievers, Gain Creators
+### 1. 프레임워크 과적용
+간단한 문제에 3개 프레임워크 동시 적용 → 분석 마비.
+**규칙**: 하나의 질문에 프레임워크 최대 2개. 3개 이상 쓰고 싶으면 질문을 쪼개라.
 
-### TAM/SAM/SOM
-- **TAM**: Total Addressable Market (전체 시장)
-- **SAM**: Serviceable Available Market (접근 가능 시장)
-- **SOM**: Serviceable Obtainable Market (획득 가능 시장)
+### 2. 빈 칸 채우기 증후군
+SWOT의 모든 칸을 억지로 채움 → 노이즈가 신호를 묻는다.
+**규칙**: 해당 없으면 "해당 없음"이라 쓴다. 빈 칸도 정보다.
 
-### Lean Canvas
-| 항목 | 내용 |
-|------|------|
-| Problem | |
-| Solution | |
-| Key Metrics | |
-| Unique Value Proposition | |
-| Unfair Advantage | |
-| Channels | |
-| Customer Segments | |
-| Cost Structure | |
-| Revenue Streams | |
+### 3. 결론 역산
+원하는 결론에 맞춰 프레임워크 수치를 조작 (RICE 점수 끼워맞추기 등).
+**규칙**: 프레임워크를 먼저 채우고, 결론은 나중에 도출한다. 결론이 직관과 다르면 직관을 의심하기 전에 입력값을 재검토.
 
-## Framework Selection Guide
-| 상황 | 추천 프레임워크 |
-|------|----------------|
-| 시장 진입 분석 | Porter's 5 Forces + TAM/SAM/SOM |
-| 제품 기회 발견 | JTBD + Value Proposition Canvas |
-| 전략 수립 | SWOT + Lean Canvas |
-| 비즈니스 모델 | Business Model Canvas + Lean Canvas |
+### 4. 프레임워크 = 분석 착각
+RICE 점수 계산 = 우선순위 결정이 아님. 맥락과 직관도 필요하다.
+**규칙**: 프레임워크 결과를 "참고 자료"로 제시하고, 최종 판단에는 정치적/조직적 맥락을 명시한다.
+
+## Quick Decision Rules
+
+시간과 목적에 따른 프레임워크 선택:
+
+| 조건 | 추천 | 이유 |
+|------|------|------|
+| 분석할 시간이 2시간뿐이다 | RICE만 쓰고 끝 | 가장 빠른 정량적 우선순위 |
+| 경영진 보고용이다 | 2x2 매트릭스 1개 + 결론 | 한 눈에 보이는 시각화 |
+| 팀 워크숍용이다 | SWOT 또는 Lean Canvas | 참여형, 포스트잇 친화적 |
+| 투자 유치용이다 | TAM-SAM-SOM + 경쟁 매트릭스 | 투자자가 기대하는 표준 구조 |
+| 기능 하나를 할지 말지 | JTBD 1문장 + Impact/Effort | 과분석 방지 |
+| 전략 방향 전환 검토 | Porter's 5 Forces + SWOT | 외부 환경 + 내부 역량 종합 |
+
+## Self-Check Checklist
+
+프레임워크 분석을 완료한 후 스스로 점검:
+
+- [ ] 프레임워크 선택 이유를 1문장으로 설명할 수 있는가?
+- [ ] 빈 칸을 억지로 채우지 않았는가?
+- [ ] 결론이 먼저 있고 프레임워크를 끼워맞추지 않았는가?
+- [ ] 프레임워크 결과와 직관이 다를 때 그 차이를 명시했는가?
+- [ ] 청중이 이 프레임워크를 알고 있는가? 모르면 설명을 추가했는가?
