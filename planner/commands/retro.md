@@ -233,7 +233,7 @@ AskUserQuestion([
 > 스프린트 데이터 대신 프로젝트 전반을 회고합니다.
 
 ```typescript
-// 프로젝트 관련 Jira 이슈 전체 조회
+// ⚠️ PROJ → 실제 Jira 프로젝트 키로 대체 (CLAUDE.md 또는 사용자 입력에서 확인)
 const project_issues = mcp__jira__jira_search({
   jql: "project = PROJ AND type = Epic ORDER BY created ASC",
   limit: 50

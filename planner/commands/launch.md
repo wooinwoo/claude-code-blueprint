@@ -348,6 +348,7 @@ AskUserQuestion([
 #### 1-2. Jira Epic 이슈
 
 ```typescript
+// ⚠️ PROJ → 실제 Jira 프로젝트 키로 대체 (CLAUDE.md 또는 사용자 입력에서 확인)
 const epic_issues = mcp__jira__jira_search({
   jql: `project = PROJ AND "Epic Link" = ${epic_key} AND status = Done ORDER BY updated DESC`,
   limit: 50

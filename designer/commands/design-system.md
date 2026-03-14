@@ -19,15 +19,23 @@ description: 디자인 시스템 관리. 토큰 조회, 일관성 감사, 컴포
 
 ### Phase 1: 토큰 소스 탐색
 
-Glob으로 프로젝트 내 토큰 정의 파일을 우선순위 순서로 탐색:
+Glob + Grep으로 프로젝트 내 토큰 정의 파일을 우선순위 순서로 탐색:
 
 ```
+// Tailwind v3 (JS config)
 Glob("tailwind.config.{js,ts,mjs,cjs}")
+
+// Tailwind v4 (@theme in CSS — tailwind.config 없으면 반드시 확인)
+Grep("@theme", glob="**/*.css")
+
+// 기타 토큰 소스
 Glob("src/**/tokens.{css,json,ts,js}")
 Glob("src/**/variables.{css,scss}")
 Glob("src/**/theme.{ts,js,json}")
 Glob("**/design-tokens/**/*.{json,ts}")
 ```
+
+Tailwind v4 판별: `tailwind.config.*` 없고 CSS에 `@theme {` 블록이 있으면 v4. `@theme` 내부의 `--color-*`, `--font-*`, `--shadow-*` 등이 토큰.
 
 파일 0개이면 `디자인 토큰 파일을 찾을 수 없습니다.` 출력 후 종료.
 
@@ -37,14 +45,18 @@ Read로 파일을 읽고 카테고리별 추출:
 
 | 카테고리 | 탐색 패턴 | 예시 |
 |----------|-----------|------|
-| **색상** | `theme.colors`, `--color-*` | `primary: '#6366F1'` |
-| **타이포그래피** | `theme.fontSize`, `--font-*` | `text-sm: '14px'` |
-| **스페이싱** | `theme.spacing`, `--spacing-*` | `4: '16px'` |
-| **브레이크포인트** | `theme.screens` | `sm: '640px'` |
-| **그림자** | `theme.boxShadow`, `--shadow-*` | `sm: '0 1px 2px ...'` |
-| **보더** | `theme.borderRadius`, `theme.borderWidth` | `lg: '8px'` |
+| 카테고리 | v3 (JS config) | v4 (@theme CSS) | 예시 |
+|----------|----------------|-----------------|------|
+| **색상** | `theme.colors` | `--color-*` | `--color-primary-500: #1e40af` |
+| **타이포그래피** | `theme.fontSize` | `--font-*`, `--text-*` | `--font-sans: 'Pretendard'` |
+| **스페이싱** | `theme.spacing` | `--spacing-*` | `--spacing-4: 16px` |
+| **브레이크포인트** | `theme.screens` | `--breakpoint-*` | `--breakpoint-sm: 640px` |
+| **그림자** | `theme.boxShadow` | `--shadow-*` | `--shadow-md: 0 12px 24px...` |
+| **보더** | `theme.borderRadius` | `--radius-*` | `--radius-lg: 8px` |
+| **레이아웃** | — | 커스텀 변수 | `--sidebar-width: 270px` |
 
-`theme.extend`와 기본 `theme`를 모두 파싱. extend가 기본을 덮어쓰면 최종 값만 표시.
+**v3**: `theme.extend`와 기본 `theme`를 모두 파싱. extend가 기본을 덮어쓰면 최종 값만 표시.
+**v4**: `@theme { }` 블록 내 모든 `--*` 변수를 파싱. `@theme inline { }` 블록은 shadcn/radix 등 UI 라이브러리 토큰 — 별도 섹션으로 표시.
 
 ### Phase 3: 사용 빈도 분석
 

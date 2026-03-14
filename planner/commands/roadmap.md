@@ -41,6 +41,7 @@ try {
     fields: "summary,status,priority,customfield_10014"  // story points
   })
 
+  // ⚠️ PROJ → 실제 Jira 프로젝트 키로 대체 (CLAUDE.md 또는 사용자 입력에서 확인)
   // 로드맵의 이니셔티브와 Jira 에픽 상태 매칭
   console.log(`
   📊 Jira 동기화 결과
@@ -88,6 +89,7 @@ prd_summaries = prd_files.map(f => {
 })
 
 // 1-3. Jira 에픽/백로그 조회
+// ⚠️ PROJ → 실제 Jira 프로젝트 키로 대체 (CLAUDE.md 또는 사용자 입력에서 확인)
 try {
   epics = mcp__jira__jira_search({
     jql: "type = Epic AND status != Done ORDER BY rank ASC",
@@ -372,6 +374,7 @@ latest = roadmaps[roadmaps.length - 1]
 roadmap = Read(latest)
 
 // 2. Jira 현재 상태 조회
+// ⚠️ PROJ → 실제 Jira 프로젝트 키로 대체 (CLAUDE.md 또는 사용자 입력에서 확인)
 try {
   epics = mcp__jira__jira_search({
     jql: "type = Epic ORDER BY rank ASC",
