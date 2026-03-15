@@ -50,39 +50,95 @@ const methodology = {
   }
 }
 
-selected = methodology[flag] || methodology["default"]
+// 플래그 있으면 바로 해당 방법론 선택
+// 플래그 없으면 → 리서치 플랜 수립 (Phase 1-Plan)
+selected = methodology[flag] || null
 ```
 
-### 1-2. 리서치 질문 정의
+### 1-Plan. 리서치 플랜 수립 (플래그 없이 진입 시)
+
+플래그 없이 `/research <topic>`만 입력하면 바로 검색하지 않고, 리서치 플랜을 먼저 세운다.
 
 ```typescript
-AskUserQuestion([
-  {
-    question: "리서치에서 답하고 싶은 핵심 질문은?",
-    header: "리서치 질문",
-    description: `
-플래그: ${flag || "일반"}
-조사 주제: ${topic}
-조사 초점: ${selected.focus}
+if (!flag) {
+  // Step 1: 기존 맥락 수집
+  const existing_docs = Glob("plans/*.md")  // 이미 있는 리서치/PRD/로드맵
+  const project_context = Read("CLAUDE.md")  // 프로젝트 개요
 
-예시 질문:
-- "이 시장의 향후 3년 성장 전망은?"
-- "타겟 사용자의 가장 큰 페인포인트는?"
-- "이 기술의 프로덕션 채택률은?"
-    `,
-    // 핵심 질문 1-3개 입력 요청
-  },
-  {
-    question: "조사 범위를 한정할 조건이 있나요?",
-    header: "범위 제한",
-    options: [
-      { label: "지역", description: "한국/미국/글로벌 등" },
-      { label: "기간", description: "최근 1년/3년/5년" },
-      { label: "산업", description: "특정 산업/버티컬 한정" },
-      { label: "없음", description: "범위 제한 없이 전체 조사" }
-    ]
-  }
-])
+  // Step 2: 리서치 플랜 초안 생성
+  const plan = Agent("researcher-strategist", `
+    주제: ${topic}
+    기존 문서: ${existing_docs}
+    프로젝트 맥락: ${project_context}
+
+    다음을 포함한 리서치 플랜을 작성해줘:
+
+    1. **리서치 목적**: 이 조사로 답하려는 핵심 질문 3-5개
+    2. **리서치 유형**: market / user / tech / competitor 중 가장 적합한 유형 (복합 가능)
+    3. **검색 전략**: 검색할 쿼리 목록 (한국어 + 영어, 총 8-12개)
+    4. **예상 소스**: 가장 신뢰할 수 있는 1차 소스 (정부 통계, 업계 보고서, 학술 등)
+    5. **범위 제한**: 지역, 기간, 산업 한정 조건
+    6. **기존 문서와의 관계**: 이미 알고 있는 것 vs 이번에 새로 조사할 것
+
+    형식: 마크다운 테이블 + 불릿 포인트
+  `)
+
+  // Step 3: 사용자 확인
+  AskUserQuestion([
+    {
+      question: "리서치 플랜을 확인해주세요. 수정할 부분이 있나요?",
+      header: "리서치 플랜 확인",
+      description: plan,
+      options: [
+        { label: "이대로 진행", description: "플랜대로 리서치 실행" },
+        { label: "수정 후 진행", description: "핵심 질문이나 검색 전략 수정" },
+        { label: "취소", description: "리서치 중단" }
+      ]
+    }
+  ])
+
+  // "수정 후 진행" 선택 시 → 수정 사항 반영 후 재확인
+  // "취소" 선택 시 → 종료
+
+  // 플랜에서 결정된 유형으로 methodology 매핑
+  selected = methodology[plan.research_type] || methodology["default"]
+}
+```
+
+### 1-2. 리서치 질문 정의 (플래그 직접 지정 시)
+
+플래그를 직접 지정한 경우 (`/research --market <industry>`) 플랜 단계를 건너뛰고 바로 질문 정의로 진입.
+
+```typescript
+if (flag) {
+  AskUserQuestion([
+    {
+      question: "리서치에서 답하고 싶은 핵심 질문은?",
+      header: "리서치 질문",
+      description: `
+  플래그: ${flag}
+  조사 주제: ${topic}
+  조사 초점: ${selected.focus}
+
+  예시 질문:
+  - "이 시장의 향후 3년 성장 전망은?"
+  - "타겟 사용자의 가장 큰 페인포인트는?"
+  - "이 기술의 프로덕션 채택률은?"
+      `,
+      // 핵심 질문 1-3개 입력 요청
+    },
+    {
+      question: "조사 범위를 한정할 조건이 있나요?",
+      header: "범위 제한",
+      options: [
+        { label: "지역", description: "한국/미국/글로벌 등" },
+        { label: "기간", description: "최근 1년/3년/5년" },
+        { label: "산업", description: "특정 산업/버티컬 한정" },
+        { label: "없음", description: "범위 제한 없이 전체 조사" }
+      ]
+    }
+  ])
+}
 
 state.questions = user_questions
 state.scope = user_scope
