@@ -157,8 +157,8 @@ Grep/Read로 소스 코드에서 직접 패턴을 검색한다.
 // img alt 누락
 const img_no_alt = Grep({ pattern: '<img(?![^>]*alt=)[^>]*>', glob: '*.{tsx,jsx,html}' })
 
-// onClick만 있고 onKeyDown 없는 비인터랙티브 요소
-const click_no_key = Grep({ pattern: 'onClick=.*(?!onKeyDown)', glob: '*.{tsx,jsx}' })
+// onClick만 있고 onKeyDown 없는 비인터랙티브 요소 (div, span)
+const click_no_key = Grep({ pattern: '<(div|span)[^>]*onClick(?![^>]*onKeyDown)', glob: '*.{tsx,jsx}' })
 
 // heading 레벨 건너뜀 감지
 const h1 = Grep({ pattern: '<h1|<H1', glob: '*.{tsx,jsx,html}' })

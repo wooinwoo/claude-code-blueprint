@@ -102,36 +102,28 @@ if (args.feature) {
 
 ### 2-1. WebSearch 실행 (경쟁사별)
 
-**각 경쟁사에 대해 4가지 카테고리로 검색합니다:**
+**각 경쟁사에 대해 3가지 검색을 실행합니다** (경쟁사당 최대 3회 — 과도한 검색 방지):
 
 ```typescript
 for (const competitor of competitors) {
-  // 1. 제품 기능
-  WebSearch({ query: `${competitor} product features ${current_year}` })
-  WebSearch({ query: `${competitor} 주요 기능 특징 ${current_year}` })
+  // 1. 제품 + 기능 + 가격 (통합 쿼리)
+  WebSearch({ query: `${competitor} 주요 기능 요금제 가격 ${current_year}` })
 
-  // 2. 가격 정책
-  WebSearch({ query: `${competitor} pricing plans ${current_year}` })
-  WebSearch({ query: `${competitor} 요금제 가격` })
+  // 2. 리뷰 + 평판
+  WebSearch({ query: `${competitor} 리뷰 장단점 평가 ${current_year}` })
 
-  // 3. 고객 리뷰/평판
-  WebSearch({ query: `${competitor} customer reviews pros cons` })
-  WebSearch({ query: `${competitor} G2 review rating` })
-
-  // 4. 비즈니스 정보
-  WebSearch({ query: `${competitor} funding revenue company size ${current_year}` })
-  WebSearch({ query: `${competitor} 투자 매출 기업 규모` })
+  // 3. 기업 정보
+  WebSearch({ query: `${competitor} 투자 매출 기업 규모 ${current_year}` })
 }
+// 총 검색 횟수: 경쟁사 수 × 3 (4사 = 12회)
 ```
 
-**`--feature` 모드 추가 검색:**
+**`--feature` 모드 추가 검색** (경쟁사당 +1회):
 
 ```typescript
 if (analysis_mode === "feature_focus") {
   for (const competitor of competitors) {
-    WebSearch({ query: `${competitor} ${target_feature} feature review` })
-    WebSearch({ query: `${competitor} ${target_feature} comparison benchmark` })
-    WebSearch({ query: `${competitor} ${target_feature} 기능 사용법 리뷰` })
+    WebSearch({ query: `${competitor} ${target_feature} 기능 비교 리뷰 ${current_year}` })
   }
 }
 ```

@@ -110,9 +110,9 @@ dev (개발), research (리서치), review (코드 리뷰)
 
 **Designer (4)**: anti-ai-slop, design-tokens(+다크모드/CSS변수전략), responsive, motion
 
-### Skills — 6개
+### Skills — 4개
 
-**Base (7)** + **Designer (6)**: frontend-design, interface-design, taste, web-design-guidelines, contrast-checker, excalidraw-diagram
+**Base (7)** + **Designer (4)**: interface-design, taste, web-design-guidelines, contrast-checker
 
 ### Contexts — 5개
 

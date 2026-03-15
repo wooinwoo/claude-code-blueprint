@@ -16,6 +16,8 @@ description: 시안 vs 구현물 시각 QA. Figma 스펙 대비 구현 차이점
 - Figma Desktop 앱에서 비교할 노드를 선택한 상태
 - Dev Mode MCP 서버 실행 중 (localhost:3845)
 
+> **Figma MCP 미연결 시**: "Figma MCP에 연결할 수 없습니다. 다음 대안을 사용하세요:" → 스크린샷/디자인 스펙을 직접 제공하거나, `--component` 모드로 소스 코드 기반 분석만 진행.
+
 ## 실행 절차
 
 ### Phase 1: Figma 스펙 수집
@@ -46,9 +48,15 @@ mcp__playwright__browser_navigate({ url: target_url })
 const screenshot = mcp__playwright__browser_take_screenshot()
 
 // 대응되는 요소의 computed style 추출
+// 셀렉터 전략: 사용자에게 CSS 셀렉터를 질문하거나, Playwright snapshot으로 요소 탐색
+// (data-component 등 특정 속성에 의존하지 않음)
 const computed = mcp__playwright__browser_evaluate({
   expression: `
-    const el = document.querySelector('[data-component="ComponentName"]');
+    // 셀렉터 우선순위: 사용자 지정 > data-testid > role+name > className
+    const el = document.querySelector('${user_selector}')
+              || document.querySelector('[data-testid="${component_name}"]')
+              || document.querySelector('[class*="${component_name}"]');
+    if (!el) return { error: '요소를 찾을 수 없습니다. CSS 셀렉터를 직접 지정해주세요.' };
     const styles = getComputedStyle(el);
     return {
       color: styles.color,
