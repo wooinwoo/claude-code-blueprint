@@ -157,12 +157,14 @@ const duplicates = tokens.filter((a, b) => a.value === b.value && a.name !== b.n
 ### Phase 1: 컴포넌트 파일 탐색
 
 ```
+// 대소문자 모두 탐색 (shadcn/ui는 소문자 파일명 관례)
 Glob("**/{name}.{tsx,jsx,vue}")
+Glob("**/{Name_lowercase}.{tsx,jsx,vue}")
 Glob("**/{name}/index.{tsx,jsx,vue}")
 Glob("**/{name}/*.{tsx,jsx,vue}")
 ```
 
-0개이면 유사 이름 재탐색: `Glob("**/*{name}*.{tsx,jsx,vue}")` → `"Button을 찾을 수 없습니다. 유사: IconButton.tsx, ButtonGroup.tsx"`
+0개이면 유사 이름 재탐색: `Glob("**/*{name}*.{tsx,jsx,vue}")` (대소문자 무시) → `"Button을 찾을 수 없습니다. 유사: IconButton.tsx, ButtonGroup.tsx"`
 
 ### Phase 2: 사용처 검색
 
@@ -173,7 +175,14 @@ Grep("<{name}[\\s/>]", glob="**/*.{tsx,jsx,vue}")
 
 ### Phase 3: Prop 분석
 
-Read로 파일을 읽고 `interface {Name}Props` 또는 `type {Name}Props`에서 prop 추출. 각 prop의 타입, 필수/선택 여부, 기본값을 정리.
+Read로 파일을 읽고 Props 추출. 다음 패턴 모두 탐색:
+
+- `interface {Name}Props` — 명시적 인터페이스
+- `type {Name}Props` — 타입 별칭
+- `React.ComponentProps<"tag"> & { ... }` — 교차 타입 (shadcn/ui 관례)
+- `VariantProps<typeof ...>` — cva variant props (자동 추론)
+
+각 prop의 타입, 필수/선택 여부, 기본값을 정리.
 
 ### Phase 4: Variant 목록
 
