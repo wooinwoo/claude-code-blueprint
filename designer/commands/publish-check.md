@@ -22,10 +22,33 @@ URL이 주어지면 Lighthouse CLI로 자동 점수 수집한다.
 // Lighthouse CLI 실행
 const lh_result = Bash("npx lighthouse ${url} --output=json --output-path=./lighthouse-report.json --chrome-flags='--headless --no-sandbox'")
 
-// Chrome 미설치 시 폴백
+// Chrome 미설치 시 Playwright 폴백
 if (lh_result.error && lh_result.error.includes('Chrome')) {
-  console.log("⚠️ Chrome 미설치 — Phase 1 스킵, Phase 2-3만 진행")
-  // Phase 2로 직행
+  console.log("⚠️ Chrome/Lighthouse 미설치 — Playwright MCP로 기본 성능 체크 진행")
+
+  // Playwright로 대체 성능 측정
+  mcp__playwright__browser_navigate({ url })
+  const perf = mcp__playwright__browser_evaluate({
+    expression: `JSON.stringify({
+      domContentLoaded: performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart,
+      load: performance.timing.loadEventEnd - performance.timing.navigationStart,
+      domNodes: document.querySelectorAll('*').length,
+      images: document.querySelectorAll('img').length,
+      imagesWithoutAlt: document.querySelectorAll('img:not([alt])').length,
+      scripts: document.querySelectorAll('script').length,
+      stylesheets: document.querySelectorAll('link[rel="stylesheet"]').length
+    })`
+  })
+
+  // 기본 성능 리포트 출력 (Lighthouse 대체)
+  console.log(`
+  ⚡ 기본 성능 체크 (Playwright)
+  DOMContentLoaded: ${perf.domContentLoaded}ms ${perf.domContentLoaded > 3000 ? '❌' : '✅'}
+  Load: ${perf.load}ms ${perf.load > 5000 ? '❌' : '✅'}
+  DOM 노드 수: ${perf.domNodes} ${perf.domNodes > 1500 ? '⚠️ 과다' : '✅'}
+  이미지: ${perf.images}개 (alt 누락: ${perf.imagesWithoutAlt}개)
+  `)
+  // Phase 2로 계속 진행
 }
 
 // JSON 파싱

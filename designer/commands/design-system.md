@@ -63,9 +63,17 @@ Read로 파일을 읽고 카테고리별 추출:
 Grep으로 각 토큰의 사용 횟수 집계:
 
 ```
-Grep("bg-primary|text-primary|border-primary", glob="**/*.{tsx,jsx,vue,html}")  → count
-Grep("var\\(--color-primary\\)", glob="**/*.{css,scss,tsx,jsx}")  → count
+// Tailwind 클래스 사용 (variant 포함: bg-primary/50, text-primary-foreground 등)
+Grep("bg-primary|text-primary|border-primary|ring-primary|outline-primary", glob="**/*.{tsx,jsx,vue,html}")  → count
+// opacity modifier (bg-primary/50 등)
+Grep("primary/\\d+", glob="**/*.{tsx,jsx,vue,html}")  → count
+// -foreground 파생 토큰 (text-primary-foreground 등)
+Grep("primary-foreground|secondary-foreground|muted-foreground|accent-foreground", glob="**/*.{tsx,jsx,vue,html}")  → count
+// CSS 변수 직접 사용
+Grep("var\\(--color-primary|var\\(--primary", glob="**/*.{css,scss,tsx,jsx}")  → count
 ```
+
+각 토큰 이름에 대해 위 패턴을 반복. 토큰명이 `primary`이면 `primary`를 치환하여 검색.
 
 ### 출력 형식
 
