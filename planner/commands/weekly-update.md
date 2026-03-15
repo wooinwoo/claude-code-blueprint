@@ -76,6 +76,11 @@ if (jira_unavailable) {
       description: "이슈키, 제목, SP, 담당자 (예: PROJ-123 사용자 인증 v2 8SP 김개발)"
     },
     {
+      question: "현재 진행 중인 항목은?",
+      header: "진행 중",
+      description: "이슈키, 제목, 진행률, 담당자 (예: PROJ-456 결제 연동 60% 이프론트)"
+    },
+    {
       question: "현재 블로커가 있나요?",
       header: "블로커/리스크",
       description: "블로커 이슈와 영향 범위"
