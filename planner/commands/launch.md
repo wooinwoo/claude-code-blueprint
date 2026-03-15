@@ -44,35 +44,33 @@ if (prd_files.length > 0) {
 
 ```typescript
 // ⚠️ PROJ → 실제 Jira 프로젝트 키로 대체 (CLAUDE.md 또는 사용자 입력에서 확인)
-const epic = mcp__jira__jira_search({
-  jql: "project = PROJ AND type = Epic AND summary ~ '{feature}'",
-  limit: 5
-})
-
-if (epic.issues.length > 0) {
-  // Epic 하위 이슈 상태 확인
-  const epic_issues = mcp__jira__jira_search({
-    jql: `project = PROJ AND "Epic Link" = ${epic.issues[0].key} ORDER BY status ASC`,
-    limit: 50
+try {
+  const epic = mcp__jira__jira_search({
+    jql: "project = PROJ AND type = Epic AND summary ~ '{feature}'",
+    limit: 5
   })
 
-  console.log(`
-  🎯 관련 Epic: ${epic.issues[0].key} — ${epic.issues[0].summary}
-  하위 이슈: ${epic_issues.total}건
-  - Done: ${done_count}건
-  - In Progress: ${in_progress_count}건
-  - To Do: ${todo_count}건
-  `)
+  if (epic.issues.length > 0) {
+    // Epic 하위 이슈 상태 확인
+    // ⚠️ PROJ → 실제 Jira 프로젝트 키로 대체 (CLAUDE.md 또는 사용자 입력에서 확인)
+    const epic_issues = mcp__jira__jira_search({
+      jql: `project = PROJ AND "Epic Link" = ${epic.issues[0].key} ORDER BY status ASC`,
+      limit: 50
+    })
+
+    console.log(`
+    🎯 관련 Epic: ${epic.issues[0].key} — ${epic.issues[0].summary}
+    하위 이슈: ${epic_issues.total}건
+    - Done: ${done_count}건
+    - In Progress: ${in_progress_count}건
+    - To Do: ${todo_count}건
+    `)
+  } else {
+    console.log("⚠️ 관련 Epic을 찾을 수 없습니다. 일반 런치 체크리스트를 생성합니다.")
+  }
+} catch (error) {
+  console.log("⚠️ Jira 접근 불가. PRD와 사용자 입력 기반으로 체크리스트를 생성합니다.")
 }
-```
-
-**예외 처리:**
-```
-Jira 접근 불가:
-→ "Jira에 접근할 수 없습니다. PRD와 사용자 입력 기반으로 체크리스트를 생성합니다."
-
-Epic 없음:
-→ "관련 Epic을 찾을 수 없습니다. 일반 런치 체크리스트를 생성합니다."
 ```
 
 #### 1-3. 기존 런치 체크리스트 확인

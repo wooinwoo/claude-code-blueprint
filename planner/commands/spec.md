@@ -329,12 +329,15 @@ if (!file_exists) {
 
 ```typescript
 if (args.jira) {
-  mcp__jira__jira_add_comment({
-    issue_key: args.jira,
-    body: `기능 명세서 작성 완료: plans/spec-${feature_name}-${current_date}.md\n\n수용 기준: ${ac_items.length}건 (검증 완료)\n상태: Draft`
-  })
-
-  console.log(`Jira ${args.jira}에 코멘트 추가됨`)
+  try {
+    mcp__jira__jira_add_comment({
+      issue_key: args.jira,
+      body: `기능 명세서 작성 완료: plans/spec-${feature_name}-${current_date}.md\n\n수용 기준: ${ac_items.length}건 (검증 완료)\n상태: Draft`
+    })
+    console.log(`✅ Jira ${args.jira}에 코멘트 추가됨`)
+  } catch (error) {
+    console.log(`⚠️ Jira 코멘트 추가 실패. 문서는 정상 저장됨.`)
+  }
 }
 ```
 

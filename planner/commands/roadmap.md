@@ -336,10 +336,14 @@ if (epics.length > 0) {
   if (user_chose_yes) {
     state.scored_items.forEach(item => {
       if (item.jira_key) {
-        mcp__jira__jira_update_issue({
-          issue_key: item.jira_key,
-          fields: { labels: { add: state.quarter } }
-        })
+        try {
+          mcp__jira__jira_update_issue({
+            issue_key: item.jira_key,
+            fields: { labels: { add: state.quarter } }
+          })
+        } catch (error) {
+          console.log(`⚠️ Jira ${item.jira_key} 업데이트 실패. 문서는 정상 저장됨.`)
+        }
       }
     })
   }

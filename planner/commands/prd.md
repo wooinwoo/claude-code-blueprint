@@ -359,10 +359,15 @@ if (!file_exists) {
 
 ```typescript
 if (jira_key) {
-  mcp__jira__jira_add_comment({
-    issue_key: jira_key,
-    body: `PRD 작성 완료: plans/prd-${feature_name}.md\n\n섹션 완전성: ${complete_count}/10\n미완성: ${tbd_items.length}개 항목`
-  })
+  try {
+    mcp__jira__jira_add_comment({
+      issue_key: jira_key,
+      body: `PRD 작성 완료: plans/prd-${feature_name}.md\n\n섹션 완전성: ${complete_count}/10\n미완성: ${tbd_items.length}개 항목`
+    })
+    console.log(`✅ Jira ${jira_key}에 코멘트 추가됨`)
+  } catch (error) {
+    console.log(`⚠️ Jira 코멘트 추가 실패. 문서는 정상 저장됨.`)
+  }
 }
 ```
 

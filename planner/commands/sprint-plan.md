@@ -378,10 +378,14 @@ if (create_jira_sprint) {
   // 참고: mcp-atlassian에서 스프린트 생성 API가 제공되는 경우
   // 이슈를 스프린트로 이동
   for (const issue of [...selected, ...carryover.issues]) {
-    mcp__jira__jira_update_issue({
-      issue_key: issue.key,
-      fields: { sprint: { id: new_sprint_id } }
-    })
+    try {
+      mcp__jira__jira_update_issue({
+        issue_key: issue.key,
+        fields: { sprint: { id: new_sprint_id } }
+      })
+    } catch (error) {
+      console.log(`⚠️ Jira ${issue.key} 스프린트 이동 실패.`)
+    }
   }
 }
 ```
