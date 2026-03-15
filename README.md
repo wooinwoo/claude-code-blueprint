@@ -1,315 +1,277 @@
 # wiw_claude-code
 
-회사 프로젝트용 Claude Code 설정 템플릿
+Claude Code 설정 템플릿. 프로젝트에 설치하면 에이전트, 커맨드, 룰, 스킬, 훅, MCP 서버가 한 번에 세팅됩니다.
+
+## 프로필
+
+| 프로필 | 대상 | 설치 명령 |
+|--------|------|-----------|
+| `react-next` | React/Next.js 개발자 | `.\setup.ps1 react-next C:\path\to\project` |
+| `nestjs` | NestJS 백엔드 개발자 | `.\setup.ps1 nestjs C:\path\to\project` |
+| `designer` | 퍼블리싱까지 하는 디자이너 | `.\setup.ps1 designer C:\path\to\project` |
+| `planner` | PM / 기획자 | `.\setup.ps1 planner C:\path\to\project` |
+
+## Quick Start
+
+```powershell
+# 1. 클론
+git clone <repo-url> C:\_project\template\wiw_claude-code
+
+# 2. 프로젝트에 설치
+cd C:\_project\template\wiw_claude-code
+.\setup.ps1 react-next C:\path\to\my-project
+
+# 3. 토큰 설정
+notepad C:\path\to\my-project\.claude\.env
+# GITHUB_PAT=ghp_xxx
+# JIRA_TOKEN=xxx (선택)
+
+# 4. CLAUDE.md 작성
+# 프로젝트 개요, 기술 스택, 구조, 컨벤션
+```
+
+설치 후 Claude Code를 열면 바로 사용 가능합니다.
+
+---
+
+## 아키텍처
+
+```
+ECC (upstream) ──sync.ps1──→ base/ ──┐
+                                     ├──setup.ps1──→ 프로젝트/.claude/
+                     common/ ────────┤
+                     [stack]/ ───────┘
+```
+
+### 3계층 시스템
+
+| 계층 | 경로 | 역할 | 수정 |
+|------|------|------|------|
+| **Base** | `base/` | ECC 커뮤니티 에이전트, 룰, 스킬 | sync.ps1만 (직접 수정 금지) |
+| **Common** | `common/` | 회사 공통 커맨드, 룰, MCP 래퍼 | 자유 |
+| **Stack/Profile** | `react-next/`, `nestjs/`, `designer/`, `planner/` | 역할별 전용 설정 | 자유 |
+
+- **Dev 스택** (react-next, nestjs): base + common + stack 전부 설치
+- **Non-dev 프로필** (designer, planner): base 선택적 + common + profile 설치 (TypeScript 룰, 빌드 도구 스킵)
+
+### 전달 방식
+
+| 항목 | 방식 | 업데이트 |
+|------|------|----------|
+| rules/, hooks/, contexts/, scripts/ | Junction (심볼릭 링크) | `git pull` 시 자동 반영 |
+| agents/, commands/, skills/ | 파일 복사 | `setup.ps1` 재실행 필요 |
+| settings.json, .mcp.json, .env | 최초 1회 복사 | 수동 편집 |
+
+---
+
+## 프로필별 기능
+
+### Dev: React/Next.js
+
+| 항목 | 수량 | 주요 내용 |
+|------|------|-----------|
+| Agents | 15 | architect, react-reviewer, performance-reviewer, security-reviewer 등 |
+| Commands | 11 | `/orchestrate`, `/code-review`, `/build-fix`, `/test-coverage`, `/commit` 등 |
+| Rules | 18 | git-workflow, react-composition, nextjs-app-router, a11y 등 |
+| Skills | 10 | react-patterns, security-review, verification-loop 등 |
+
+**핵심 커맨드:**
+- `/orchestrate` — 6-Phase 개발 파이프라인 (설계 → 브랜치 → 구현 → 리뷰 → PR)
+- `/code-review` — 5개 리뷰 에이전트 병렬 실행
+- `/build-fix` — lint → type → build 순서로 에러 자동 수정
+
+### Dev: NestJS
+
+| 항목 | 수량 | 주요 내용 |
+|------|------|-----------|
+| Agents | 15 | architect, schema-designer, database-reviewer, nestjs-pattern-reviewer 등 |
+| Commands | 10 | `/orchestrate`, `/code-review`, `/build-fix`, `/wt`, `/commit` 등 |
+| Rules | 15 | backend-architecture (헥사고날), nestjs-e2e-testing 등 |
+| Skills | 8 | hexagonal-architecture, security-review 등 |
+
+### Designer
+
+퍼블리싱까지 하는 디자이너용. Figma 연동, 접근성 검증, 디자인 시스템 관리.
+
+| 항목 | 수량 | 주요 내용 |
+|------|------|-----------|
+| Agents | 3 | design-reviewer, a11y-reviewer, markup-reviewer |
+| Commands | 6 | `/design-review`, `/design-system`, `/publish-check`, `/discover`, `/figma-to-code`, `/design-qa` |
+| Rules | 4 | anti-ai-slop, design-tokens (+다크모드), responsive, motion |
+| Skills | 4 | interface-design, taste, web-design-guidelines, contrast-checker |
+| MCP | 6 | jira, github, context7, memory, **figma**, **playwright** |
+
+**핵심 커맨드:**
+- `/design-system tokens|audit|component|suggest` — 디자인 토큰 조회/감사/분석
+- `/publish-check` — Lighthouse + Playwright 반응형 + 소스 정적분석 (a11y, SEO, 성능)
+- `/figma-to-code` — Figma Dev Mode MCP로 시안 → 코드 변환
+- `/design-review` — 3개 에이전트 병렬 리뷰 (디자인/접근성/마크업)
+
+### Planner
+
+PM/기획자용. 리서치, 문서 작성, 프로젝트 관리. Jira 선택 연동.
+
+| 항목 | 수량 | 주요 내용 |
+|------|------|-----------|
+| Agents | 3 | researcher-strategist, ux-researcher, content-writer |
+| Commands | 11 | `/prd`, `/spec`, `/research`, `/competitive-analysis`, `/okr`, `/roadmap`, `/story-map`, `/sprint-plan`, `/retro`, `/launch`, `/weekly-update` |
+| Rules | 3 | document-format, prioritization (인지 편향 차단), research-methodology |
+| Skills | 2 | business-frameworks, stakeholder-communication |
+| MCP | 4 | jira, github, context7, memory |
+
+**핵심 커맨드:**
+- `/research` — 플래그 없으면 리서치 플랜 수립 → 확인 → 실행. `--market|--user|--tech|--competitor` 직접 지정 가능
+- `/prd` — 10섹션 PRD 생성 (TBD 관리, Jira 연동)
+- `/story-map` — PRD 기반 스토리맵 + Walking Skeleton MVP 검증
+- `/okr` — OKR 생성/검토 (O는 정성적, KR는 정량적 자동 검증)
+- `/competitive-analysis` — WebSearch 기반 경쟁사 분석 (기능 매트릭스 + SWOT)
+
+> 모든 커맨드는 **Jira 없이도 동작**합니다. Jira 미연결 시 수동 입력 모드로 자동 전환.
+
+---
+
+## 설치 후 할 일
+
+### 1. CLAUDE.md 작성 (필수)
+
+프로젝트 루트에 `CLAUDE.md`를 작성합니다. Claude가 프로젝트를 이해하는 핵심 파일입니다.
+
+```markdown
+# 프로젝트명
 
 ## 개요
+한 줄 설명
 
-[everything-claude-code(ECC)](https://github.com/affaan-m/everything-claude-code)를 베이스로,
-회사 공통 규칙과 스택별(React/Next.js, NestJS) 전용 설정을 추가한 템플릿입니다.
+## 기술 스택
+- Frontend: React 19, TanStack Router, Tailwind v4
+- Backend: NestJS, PostgreSQL
 
-각 프로젝트는 이 레포 하나만 참조하면 됩니다.
+## 프로젝트 구조
+src/
+├── components/   UI 컴포넌트
+├── pages/        페이지
+└── services/     API 서비스
 
-```
-ECC (업스트림) ──sync.ps1──→ wiw_claude-code ──setup.ps1──→ 각 프로젝트
-                              (단일 소스)                  (junction 자동 반영)
-```
-
-## 구조
-
-```
-wiw_claude-code/
-│
-├── base/                    ECC에서 동기화 (sync.ps1로 관리, 직접 수정 X)
-│   ├── agents/              ECC 에이전트 (10개: planner, architect, tdd-guide 등)
-│   ├── commands/            ECC 커맨드 (3개: orchestrate, verify, learn)
-│   ├── rules/               ECC 규칙
-│   │   ├── common/          공통 (git-workflow, security, testing 등)
-│   │   └── typescript/      TypeScript 전용 (patterns, coding-style 등)
-│   ├── skills/              ECC 스킬 (security-review, verification-loop, continuous-learning-v2 등)
-│   ├── hooks/               ECC 훅 설정
-│   ├── contexts/            ECC 컨텍스트 (dev, research, review)
-│   ├── scripts/             ECC 스크립트 (hooks, lib)
-│   └── _excluded/           exclude.json으로 제외된 항목 (참조용, junction 안 걸림)
-│       ├── agents/          go-build-resolver, go-reviewer, python-reviewer
-│       ├── commands/        go-*, python-*, multi-*, pm2, sessions, checkpoint
-│       ├── skills/          django-*, springboot-*, golang-*, python-*, java-*, jpa-*
-│       └── rules/           golang/, python/
-│
-├── common/                  회사 공통 추가 (ECC에 없는 것만)
-│   ├── rules/
-│   │   ├── pull-request.md  PR 작성 가이드 (제목 규칙, Jira 키 연동, 본문 템플릿)
-│   │   └── jira.md          Jira 이슈 생성 규칙 (Task/Bug/Story 템플릿, MCP 도구)
-│   ├── commands/
-│   │   ├── commit.md        /commit 커맨드
-│   │   └── jira.md          /jira bug|task 통합 커맨드
-│   ├── scripts/             MCP 서버 래퍼 스크립트
-│   │   ├── run-github-mcp.cjs  GitHub MCP (.env에서 PAT 로드)
-│   │   └── run-jira-mcp.cjs    Jira MCP (.env에서 토큰 로드)
-│   ├── mcp-configs/
-│   │   └── mcp-servers.json MCP 서버 설정 템플릿 (settings.local.json에 복사)
-│   └── .env.example         환경 변수 템플릿 (GITHUB_PAT, JIRA_TOKEN 등)
-│
-├── react-next/              React/Next.js 전용 추가
-│   ├── agents/
-│   │   ├── react-reviewer.md       React 코드 리뷰 에이전트
-│   │   ├── performance-reviewer.md 성능 전문가 에이전트 (Core Web Vitals, 번들, 렌더링)
-│   │   └── next-build-resolver.md  Next.js 빌드 에러 해결 에이전트
-│   ├── commands/
-│   │   └── orchestrate.md          /orchestrate 4-Phase 파이프라인 (상태 추적)
-│   └── skills/
-│       ├── react-patterns/         React 컴포넌트 패턴
-│       ├── react-testing/          React 테스팅 가이드
-│       └── react-data-patterns/    데이터 페칭 패턴
-│
-├── nestjs/                  NestJS 전용 추가
-│   ├── rules/
-│   │   ├── backend-architecture.md  헥사고날 아키텍처 가이드 (Small/Medium/Large 스케일별)
-│   │   └── nestjs-e2e-testing.md    E2E 테스트 작성 규칙 (필수/불필요 테스트 기준)
-│   ├── agents/
-│   │   └── schema-designer.md       DB 스키마 설계 에이전트
-│   └── commands/
-│       ├── orchestrate.md           /orchestrate 4-Phase 파이프라인 (상태 추적)
-│       └── wt.md                    /wt new|list|sync|rm 통합 커맨드
-│
-├── exclude.json             ECC에서 제외할 항목 매핑 (sync.ps1이 참조)
-├── sync.ps1                 ECC → base/ 동기화 + exclude 처리
-├── setup.ps1                프로젝트 설치 스크립트
-├── VERSION                  현재 버전 (1.0.0)
-└── README.md
+## 컨벤션
+- 컴포넌트: PascalCase 함수형
+- API: RESTful, /api/v1/ prefix
 ```
 
-## 사용법
+### 2. .env 토큰 설정 (선택)
 
-### 사전 준비
+```bash
+# .claude/.env
+GITHUB_PAT=ghp_xxxxxxxxxxxx           # GitHub MCP용
+JIRA_URL=https://company.atlassian.net # Jira MCP용 (선택)
+JIRA_USERNAME=email@company.com        # Jira MCP용 (선택)
+JIRA_TOKEN=ATATTxxxxxxxx              # Jira MCP용 (선택)
+```
 
-1. 이 레포를 clone
-2. ECC 레포를 clone (관리자만)
+### 3. .mcp.json 정리 (선택)
+
+안 쓰는 MCP 서버는 `.mcp.json`에서 제거합니다.
+
+### 4. 프로젝트 전용 룰 추가 (선택)
+
+`.claude/rules/project.md`에 프로젝트만의 규칙을 추가할 수 있습니다.
+
+---
+
+## 업데이트
 
 ```powershell
-git clone <wiw_claude-code repo> C:\_project\template\wiw_claude-code
-git clone https://github.com/affaan-m/everything-claude-code C:\_project\template\everything-claude-code
-```
-
-### 관리자: ECC 업데이트 반영
-
-ECC에 업데이트가 있을 때 실행합니다.
-
-```powershell
-# 1. ECC 최신화
-cd C:\_project\template\everything-claude-code
-git pull
-
-# 2. wiw base/ 에 동기화
-cd C:\_project\template\wiw_claude-code
-.\sync.ps1
-
-# 3. 변경사항 배포
-git add .
-git commit -m "chore: sync ecc"
-git push
-```
-
-sync.ps1은 base/ 폴더만 갱신합니다. common/, react-next/, nestjs/ 는 건드리지 않습니다.
-`exclude.json`에 정의된 항목은 자동으로 `base/_excluded/`로 이동됩니다.
-
-### 관리자: 제외 항목 관리
-
-`exclude.json`을 편집하여 ECC에서 가져올 항목을 제어합니다.
-
-```jsonc
-// exclude.json - 제외할 항목 (나머지는 전부 포함)
-{
-  "rules": ["golang", "python"],           // 폴더 단위
-  "agents": ["go-reviewer.md"],            // 파일 단위
-  "commands": ["go-build.md", "pm2.md"],   // 파일 단위
-  "skills": ["django-patterns"]            // 폴더 단위
-}
-```
-
-- **제외 해제**: 항목을 지우면 다음 sync 시 `base/`에 포함됨
-- **제외 추가**: 항목을 추가하면 다음 sync 시 `_excluded/`로 이동
-- **파일 삭제 없음**: 제외된 파일도 `_excluded/`에 보관 (참조 가능)
-
-### 개발자: 프로젝트에 설치 (최초 1회)
-
-```powershell
-cd C:\_project\template\wiw_claude-code
-
-# React/Next.js 프로젝트
-.\setup.ps1 react-next C:\path\to\my-react-project
-
-# NestJS 프로젝트
-.\setup.ps1 nestjs C:\path\to\my-nestjs-project
-```
-
-setup.ps1이 하는 일:
-- `rules/` junction 생성 (자동 반영)
-- `agents/`, `commands/`, `skills/` 파일 복사
-- `hooks/`, `contexts/`, `scripts/` junction 생성 (자동 반영)
-- MCP 스크립트/설정 junction 생성 (`scripts-wiw/`, `mcp-configs/`)
-- `.claude/.env` 생성 (`.env.example`에서 복사, 토큰 직접 입력)
-- `CLAUDE.md` 초안 생성 (없을 때만)
-- `.gitignore` 업데이트
-
-### 개발자: 업데이트 받기
-
-```powershell
+# 템플릿 최신화
 cd C:\_project\template\wiw_claude-code
 git pull
 
-# rules/hooks/contexts/scripts → junction이라 자동 반영
-# agents/commands/skills → 재설치 필요:
+# junction 항목 (rules, hooks, contexts): 자동 반영됨
+# 복사 항목 (agents, commands, skills): 재설치 필요
 .\setup.ps1 react-next C:\path\to\my-project
 ```
 
-## 프로젝트에 설치되는 내역
-
-setup.ps1 실행 후 프로젝트의 `.claude/` 구조:
-
-```
-my-project/
-├── CLAUDE.md                              직접 작성 (프로젝트 고유)
-└── .claude/
-    ├── rules/                             junction (자동 반영)
-    │   ├── base-common/            → wiw/base/rules/common/
-    │   ├── base-typescript/        → wiw/base/rules/typescript/
-    │   ├── wiw-common/             → wiw/common/rules/
-    │   ├── wiw-[stack]/            → wiw/[stack]/rules/
-    │   └── project.md              직접 작성 (프로젝트 전용 규칙, 선택)
-    ├── agents/                            복사 (setup.ps1 재실행으로 갱신)
-    │   ├── architect.md             ← base/agents/
-    │   ├── react-reviewer.md        ← [stack]/agents/
-    │   └── ...
-    ├── commands/                          복사 (setup.ps1 재실행으로 갱신)
-    │   ├── build-fix.md             ← base/commands/
-    │   ├── commit.md                ← common/commands/
-    │   ├── react-review.md          ← [stack]/commands/
-    │   └── ...
-    ├── skills/                            복사 (setup.ps1 재실행으로 갱신)
-    │   ├── security-review/         ← base/skills/
-    │   ├── react-patterns/          ← [stack]/skills/
-    │   └── ...
-    ├── hooks/                      → junction → wiw/base/hooks/
-    ├── contexts/                   → junction → wiw/base/contexts/
-    ├── scripts/                    → junction → wiw/base/scripts/
-    ├── scripts-wiw/                → junction → wiw/common/scripts/
-    ├── mcp-configs/                → junction → wiw/common/mcp-configs/
-    └── .env                        ← .env.example에서 복사됨
-```
-
-- **junction** (rules, hooks, contexts, scripts 등): wiw_claude-code git pull 시 자동 반영
-- **복사** (agents, commands, skills): wiw_claude-code git pull 후 `setup.ps1` 재실행 필요
-
-## 프로젝트 고유 설정
-
-junction으로 연결되지 않는, 프로젝트에서 직접 관리하는 파일:
-
-| 파일 | 용도 | 필수 |
-|------|------|------|
-| `CLAUDE.md` | 프로젝트 개요, 기술 스택, 고유 규칙 | O (setup.ps1이 초안 생성) |
-| `.claude/rules/project.md` | 프로젝트 전용 규칙 | X (필요시 직접 생성) |
-| `.claude/settings.local.json` | 로컬 설정 (MCP 서버 등) | X (필요시 직접 생성) |
-| `CLAUDE.local.md` | 개인 설정 (gitignore됨) | X |
-
-## MCP 서버 설정
-
-setup.ps1 실행 후 MCP 서버를 활성화하는 방법:
-
-### 1. .env에 토큰 입력
+### ECC 업스트림 동기화 (관리자)
 
 ```powershell
-# .claude/.env 파일 편집 (setup.ps1이 자동 생성)
-notepad .claude\.env
+cd C:\_project\template\everything-claude-code && git pull
+cd C:\_project\template\wiw_claude-code && .\sync.ps1
+git add . && git commit -m "chore: sync ecc" && git push
 ```
 
-```env
-GITHUB_PAT=ghp_xxxxxxxxxxxx
-JIRA_URL=https://yourcompany.atlassian.net
-JIRA_USERNAME=your-email@company.com
-JIRA_TOKEN=ATATTxxxxxxxx
+---
+
+## 커스터마이징
+
+### 규칙 추가
+
+```
+common/rules/         → 모든 프로필에 적용
+react-next/rules/     → React/Next.js에만 적용
+designer/rules/       → 디자이너에만 적용
+planner/rules/        → 기획자에만 적용
 ```
 
-### 2. settings.local.json에 MCP 서버 등록
+### 커맨드 추가
 
-`.claude/mcp-configs/mcp-servers.json`에서 필요한 서버를 복사하여
-프로젝트 루트의 `.claude.json` 또는 `.claude/settings.local.json`에 추가:
+```
+common/commands/      → 모든 프로필에 적용
+react-next/commands/  → React/Next.js에만 적용
+```
 
-```json
+### base/ 직접 수정 금지
+
+`base/`는 sync.ps1이 덮어씁니다. ECC 규칙을 수정하고 싶으면 `common/` 또는 스택 폴더에 같은 이름의 파일을 만들어 override하세요.
+
+### 제외 항목 관리
+
+`exclude.json`으로 ECC에서 가져올 항목을 제어합니다.
+
+```jsonc
 {
-  "mcpServers": {
-    "github": {
-      "command": "node",
-      "args": [".claude/scripts-wiw/run-github-mcp.cjs"],
-      "description": "GitHub - PR, issue, repo 관리"
-    },
-    "mcp-atlassian": {
-      "command": "node",
-      "args": [".claude/scripts-wiw/run-jira-mcp.cjs"],
-      "description": "Jira - 이슈 조회/생성"
-    }
-  }
+  "rules": ["golang", "python"],
+  "agents": ["go-reviewer.md"],
+  "commands": ["go-build.md"],
+  "skills": ["django-patterns"]
 }
 ```
 
-래퍼 스크립트(`run-github-mcp.cjs`, `run-jira-mcp.cjs`)가 `.claude/.env`에서 토큰을 자동으로 읽으므로, 설정 파일에 토큰을 직접 노출하지 않아도 됩니다.
+---
 
-### 사용 가능한 MCP 서버
+## MCP 서버
 
-| 서버 | 용도 | 토큰 필요 |
-|------|------|----------|
-| github | PR/Issue/Repo 관리 | GITHUB_PAT |
-| mcp-atlassian | Jira 이슈 조회/생성 | JIRA_TOKEN, JIRA_URL, JIRA_USERNAME |
-| memory | 세션 간 영구 메모리 | X |
-| context7 | npm/프레임워크 라이브 문서 조회 | X |
-| magic | Magic UI 컴포넌트 | X |
+| 서버 | 용도 | 토큰 | 프로필 |
+|------|------|------|--------|
+| github | PR/Issue/Repo | GITHUB_PAT | 전체 |
+| mcp-atlassian | Jira 이슈 관리 | JIRA_TOKEN + URL + USERNAME | 전체 |
+| context7 | npm/프레임워크 문서 | 없음 | 전체 |
+| memory | 세션 간 영구 메모리 | 없음 | 전체 |
+| figma-dev-mode | Figma 시안 연동 | 로컬 SSE (localhost:3845) | designer |
+| playwright | 브라우저 자동화 | 없음 | designer, dev |
+| mysql | DB 쿼리 | DATABASE_URL | dev |
+| aws / aws-api | AWS 서비스 | AWS_PROFILE | dev |
 
-## 회사 규칙 추가/수정
+---
 
-### 공통 규칙 추가
+## Dashboard (Cockpit)
 
-모든 프로젝트에 적용할 규칙:
-
-```powershell
-# common/rules/ 에 파일 추가
-# 예: common/rules/logging.md
-git add . && git commit -m "feat: add logging rule" && git push
-```
-
-### 스택별 규칙 추가
-
-특정 스택에만 적용할 규칙:
-
-```powershell
-# react-next/ 또는 nestjs/ 에 파일 추가
-# 예: nestjs/rules/database-migration.md
-git add . && git commit -m "feat(nestjs): add migration rule" && git push
-```
-
-### 주의: base/ 는 직접 수정 금지
-
-base/ 폴더는 sync.ps1이 덮어쓰므로 직접 수정하면 안 됩니다.
-ECC 규칙을 수정하고 싶으면 common/ 또는 스택 폴더에 같은 이름의 파일을 만들어 override하세요.
-
-## Dashboard
-
-여러 프로젝트의 Claude Code 세션, Git, PR, 사용량을 한 화면에서 모니터링하는 로컬 대시보드.
+멀티 프로젝트 모니터링 로컬 대시보드.
 
 ```powershell
 cd dashboard && npm install && npm start
 # http://localhost:3847
 ```
 
-주요 기능: 프로젝트 상태 모니터링, WebSocket 터미널, Git diff 뷰어, AI Auto Commit (Haiku), Dev Server 관리, IDE 연동
+Overview (프로젝트 상태/비용) | Terminal (멀티 터미널) | Changes (2-column diff + AI Auto Commit)
 
-상세 문서: [dashboard/README.md](dashboard/README.md)
+데스크톱 앱: `Cockpit_1.3.0_x64-setup.exe` (Tauri 2)
+
+상세: [dashboard/README.md](dashboard/README.md)
+
+---
 
 ## 출처
 
-| 폴더 | 출처 | 설명 |
-|------|------|------|
-| base/ | [everything-claude-code](https://github.com/affaan-m/everything-claude-code) | 커뮤니티 Claude Code 베스트 프랙티스 |
-| common/rules/pull-request.md | srpn_.claude 자체 작성 | Jira 키 연동 PR 가이드 |
-| common/rules/jira.md | srpn_.claude 자체 작성 | Jira 이슈 생성 템플릿 |
-| nestjs/rules/ | srpn_.claude 자체 작성 | 헥사고날 아키텍처 + E2E 테스트 규칙 |
-| react-next/agents/ | bid-ai-site 자체 작성 | React/Next.js 전용 에이전트 |
-| react-next/skills/ | bid-ai-site 자체 작성 | React 패턴/테스팅 스킬 |
+| 폴더 | 출처 |
+|------|------|
+| `base/` | [everything-claude-code](https://github.com/affaan-m/everything-claude-code) |
+| `common/`, `react-next/`, `nestjs/` | 자체 작성 |
+| `designer/`, `planner/` | 자체 작성 |
