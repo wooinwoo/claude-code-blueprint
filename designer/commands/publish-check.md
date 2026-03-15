@@ -177,20 +177,21 @@ Grep/Read로 소스 코드에서 직접 패턴을 검색한다.
 #### 접근성
 
 ```typescript
-// img alt 누락
-const img_no_alt = Grep({ pattern: '<img(?![^>]*alt=)[^>]*>', glob: '*.{tsx,jsx,html}' })
+// img alt 누락 (JSX self-closing /> 대응)
+const img_no_alt = Grep({ pattern: '<img\\b(?![^/]*alt=)', glob: '*.{tsx,jsx,html}' })
 
-// onClick만 있고 onKeyDown 없는 비인터랙티브 요소 (div, span)
-const click_no_key = Grep({ pattern: '<(div|span)[^>]*onClick(?![^>]*onKeyDown)', glob: '*.{tsx,jsx}' })
+// onClick만 있고 onKeyDown 없는 비인터랙티브 요소
+// JSX는 멀티라인이므로 단일 Grep으로 잡기 어려움 → 2단계 접근
+// Step 1: onClick이 있는 div/span 파일 목록
+const files_with_click = Grep({ pattern: 'onClick', glob: '*.{tsx,jsx}', output_mode: 'files_with_matches' })
+// Step 2: 각 파일을 Read하여 해당 컴포넌트에 onKeyDown/onKeyUp/role이 있는지 확인
+// onKeyDown 없으면 접근성 이슈로 보고
 
 // heading 레벨 건너뜀 감지
 const h1 = Grep({ pattern: '<h1|<H1', glob: '*.{tsx,jsx,html}' })
 const h2 = Grep({ pattern: '<h2|<H2', glob: '*.{tsx,jsx,html}' })
 const h3 = Grep({ pattern: '<h3|<H3', glob: '*.{tsx,jsx,html}' })
 // h1 없이 h2가 있거나, h2 없이 h3가 있으면 경고
-
-// role 없는 div/span에 onClick
-const div_click = Grep({ pattern: '<(div|span)[^>]*onClick(?![^>]*role=)', glob: '*.{tsx,jsx}' })
 
 // aria-label 없는 icon-only 버튼
 const icon_btn = Grep({ pattern: '<button[^>]*>\\s*<(svg|img|Icon)', glob: '*.{tsx,jsx}' })

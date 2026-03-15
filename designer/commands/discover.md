@@ -49,9 +49,11 @@ Grep으로 각 컴포넌트의 import/사용 횟수 집계:
 수집된 데이터로 다음을 분석:
 
 - **사용 빈도**: 상위/하위 컴포넌트 순위
-- **유사 컴포넌트 그룹핑** (`--similar`): 이름·구조가 유사한 컴포넌트 묶기
-  - 네이밍 패턴: `Card`, `CardItem`, `CardSmall` → Card 계열
+- **유사 컴포넌트 그룹핑** (`--similar`): 컴포넌트 **정의** 기준으로 유사성 분석 (import/사용처는 제외)
+  - **파일명 기반**: `*Badge*.tsx`, `*Card*.tsx` 등 접미사/접두사 공유 파일 그룹핑
+  - **export 함수명 기반**: `Grep("export (default |)(function|const) \\w*(Badge|Card|Modal)", glob="src/components/**/*.tsx")`
   - Props 구조 유사도: 동일한 prop 이름을 3개 이상 공유하는 컴포넌트
+  - 주의: 단순 import/사용을 검색하면 노이즈가 과다함 → 반드시 **정의(export)** 기준으로 탐색
 - **고아 컴포넌트** (`--unused`): 단 한 곳에서도 import되지 않는 파일
 - **순환 의존성** 감지: A→B→A 패턴
 

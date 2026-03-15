@@ -311,7 +311,24 @@ required_sections = [
   "## 10. 참고 자료"
 ]
 
-missing = required_sections.filter(s => !prd_content.includes(s))
+// 섹션 번호 기반 검증 (제목 문구 변형에 강건)
+// "## 1. 개요", "## 1) 개요", "## 1 개요" 모두 매칭
+const found_sections = []
+for (let i = 1; i <= 10; i++) {
+  const pattern = new RegExp(`^## *${i}[\\.)\\s]`, 'm')
+  if (pattern.test(prd_content)) found_sections.push(i)
+}
+missing = [1,2,3,4,5,6,7,8,9,10].filter(n => !found_sections.includes(n))
+
+// 누락 섹션이 있으면 content-writer에게 보충 요청
+if (missing.length > 0) {
+  Agent("content-writer", `PRD에서 다음 섹션이 누락되었습니다. 기존 내용을 유지하면서 누락 섹션만 추가해주세요.
+    누락 섹션: ${missing.map(n => required_sections[n-1]).join(', ')}
+    기존 PRD: ${prd_content}
+  `)
+  // 보충 후 다시 검증 (최대 1회)
+}
+
 tbd_items = prd_content.match(/\[TBD.*?\]/g) || []
 ```
 

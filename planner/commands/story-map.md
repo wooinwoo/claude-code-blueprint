@@ -245,14 +245,23 @@ const mvp_candidates = activities.map(activity => {
   return activity.stories.filter(story => story.is_critical_path)
 })
 
-// Walking Skeleton 검증: 모든 Activity에 최소 1개 MVP 스토리가 있는가?
+// Walking Skeleton 검증 1: 모든 Activity에 최소 1개 MVP 스토리가 있는가?
 for (const activity of activities) {
   const mvp_count = activity.stories.filter(s => s.release === 'MVP').length
   if (mvp_count === 0) {
-    // 경고: 이 Activity에 MVP 스토리가 없으면 Walking Skeleton이 끊김
     warn(`⚠️ "${activity.name}"에 MVP 스토리가 없습니다. 전체 흐름이 끊깁니다.`)
   }
 }
+
+// Walking Skeleton 검증 2: MVP 스토리들이 연결된 end-to-end 흐름을 구성하는가?
+// 각 Activity의 MVP 스토리 출력이 다음 Activity의 MVP 스토리 입력을 활성화하는지 확인
+const mvp_flow = activities.map(a => ({
+  activity: a.name,
+  mvp_stories: a.stories.filter(s => s.release === 'MVP').map(s => s.name),
+  output: "이 Activity에서 사용자가 얻는 결과",
+  enables_next: "다음 Activity로 넘어갈 수 있는가?"
+}))
+// 흐름이 끊기는 지점이 있으면 경고하고 연결 스토리 추가 제안
 ```
 
 ### 4-3. 우선순위 워크숍 — 릴리스 라인 결정 (핵심 인터랙션)
@@ -433,7 +442,9 @@ Bash("mkdir -p plans")
 - Tasks: {n}개
 - Stories: {n}개
 
-Walking Skeleton (MVP): {n}개 스토리 — 전체 Activity 커버 여부: {예/아니오}
+Walking Skeleton (MVP): {n}개 스토리 — {covered}/{total} Activities 커버
+  커버된 Activity: {covered_list}
+  제외된 Activity: {excluded_list with reasons} (없으면 "없음")
 
 릴리스 배분:
 - MVP: {n}개 (S x{n}, M x{n}, L x{n})
