@@ -45,3 +45,4 @@ dashboard/app.js
 Thumbs.db
 .DS_Store
 dashboard/
+blog/
