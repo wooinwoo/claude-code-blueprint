@@ -2,8 +2,8 @@
  * validate-relations.js
  * 컴포넌트 간 연관관계 검증
  *
- * 1. .mcp.json ↔ scripts-wiw: MCP 서버가 참조하는 스크립트 존재 여부
- * 2. scripts-wiw ↔ .env.example: MCP 스크립트가 읽는 환경변수가 .env에 정의됐는지
+ * 1. .mcp.json ↔ scripts-ccb: MCP 서버가 참조하는 스크립트 존재 여부
+ * 2. scripts-ccb ↔ .env.example: MCP 스크립트가 읽는 환경변수가 .env에 정의됐는지
  * 3. hooks.json ↔ scripts: hook이 참조하는 스크립트 존재 여부
  * 4. guide.md ↔ commands: 가이드가 추천하는 커맨드가 실제 존재하는지
  * 5. agents model 값: 유효한 모델명인지
@@ -18,7 +18,7 @@ let errors = [];
 let checks = 0;
 
 // ============================================================
-// 1. .mcp.json → scripts-wiw 참조 검증
+// 1. .mcp.json → scripts-ccb 참조 검증
 // ============================================================
 const mcpPath = path.join(ROOT, "common", "mcp-configs", ".mcp.json");
 if (fs.existsSync(mcpPath)) {
@@ -28,11 +28,11 @@ if (fs.existsSync(mcpPath)) {
   for (const [name, config] of Object.entries(servers)) {
     if (!config.args) continue;
     const scriptArg = config.args.find(
-      (a) => typeof a === "string" && a.includes("scripts-wiw/")
+      (a) => typeof a === "string" && a.includes("scripts-ccb/")
     );
     if (scriptArg) {
-      // scripts-wiw → common/scripts 로 매핑
-      const scriptName = scriptArg.replace(".claude/scripts-wiw/", "");
+      // scripts-ccb → common/scripts 로 매핑
+      const scriptName = scriptArg.replace(".claude/scripts-ccb/", "");
       const scriptPath = path.join(ROOT, "common", "scripts", scriptName);
       if (!fs.existsSync(scriptPath)) {
         errors.push(`mcp[${name}] → common/scripts/${scriptName} 없음`);

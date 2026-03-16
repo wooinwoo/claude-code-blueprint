@@ -16,7 +16,7 @@ homunculus/
 # Claude local settings
 CLAUDE.local.md
 .claude/settings.local.json
-.claude/.wiw-stack
+.claude/.ccb-stack
 
 # Environment files
 .env
@@ -44,3 +44,4 @@ dashboard/app.js
 # OS
 Thumbs.db
 .DS_Store
+dashboard/

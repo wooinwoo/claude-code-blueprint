@@ -1,4 +1,4 @@
-# wiw_claude-code
+# claude-code-blueprint
 
 회사 프로젝트용 Claude Code 설정 템플릿. [everything-claude-code(ECC)](https://github.com/affaan-m/everything-claude-code) 베이스 + 회사 공통 + 스택별(React/Next.js, NestJS) 계층 구조.
 

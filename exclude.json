@@ -1,17 +1,21 @@
 {
-  "_description": "sync.ps1이 ECC에서 동기화 후 base/_excluded/로 이동할 항목.",
-  "_usage": "제외 해제: 항목을 지우면 다음 sync 시 base/에 포함됨. 제외 추가: 항목을 추가하면 다음 sync 시 _excluded/로 이동.",
-  "_note": "에이전트가 자동 발동하므로 대부분의 커맨드는 불필요. common/에 통합 커맨드(learn, orchestrate, jira, commit)가 있음.",
+  "_description": "sync.ps1이 ECC에서 동기화 후 base/_excluded/로 이동할 항목. 기준: CURATION.md 참고.",
+  "_updated": "2026-03-03",
 
   "rules": [
     "golang",
-    "python"
+    "python",
+    "swift"
   ],
 
   "agents": [
     "go-build-resolver.md",
     "go-reviewer.md",
-    "python-reviewer.md"
+    "python-reviewer.md",
+    "chief-of-staff.md",
+    "code-reviewer.md",
+    "database-reviewer.md",
+    "security-reviewer.md"
   ],
 
   "commands": [
@@ -43,7 +47,10 @@
     "skill-create.md",
     "tdd.md",
     "test-coverage.md",
-    "update-docs.md"
+    "update-docs.md",
+    "claw.md",
+    "learn-eval.md",
+    "promote.md"
   ],
 
   "skills": [
@@ -62,6 +69,30 @@
     "python-patterns",
     "python-testing",
     "java-coding-standards",
-    "jpa-patterns"
+    "jpa-patterns",
+    "swift-actor-persistence",
+    "swift-concurrency-6-2",
+    "swift-protocol-di-testing",
+    "swiftui-patterns",
+    "liquid-glass-design",
+    "foundation-models-on-device",
+    "cpp-coding-standards",
+    "cpp-testing",
+    "article-writing",
+    "content-engine",
+    "investor-materials",
+    "investor-outreach",
+    "market-research",
+    "visa-doc-translate",
+    "frontend-slides",
+    "continuous-learning",
+    "clickhouse-io",
+    "nutrient-document-processing",
+    "content-hash-cache-pattern",
+    "cost-aware-llm-pipeline",
+    "regex-vs-llm-structured-text",
+    "security-scan",
+    "skill-stocktake",
+    "project-guidelines-example"
   ]
 }

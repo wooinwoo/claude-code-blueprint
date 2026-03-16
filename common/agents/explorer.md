@@ -1,5 +1,6 @@
 ---
 description: Codebase exploration and bug investigation specialist. Traces execution flows, identifies root causes, and maps affected areas.
+model: sonnet
 tools:
   - Read
   - Grep

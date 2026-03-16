@@ -4,7 +4,7 @@
 
 .DESCRIPTION
     setup.ps1로 설치된 프로젝트를 다시 갱신합니다.
-    .claude/.wiw-stack 파일에서 스택 정보를 자동으로 읽습니다.
+    .claude/.ccb-stack 파일에서 스택 정보를 자동으로 읽습니다.
 
 .EXAMPLE
     .\update.ps1 C:\my-react-project
@@ -17,18 +17,18 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$WiwRoot = $PSScriptRoot
+$CcbRoot = $PSScriptRoot
 
 foreach ($ProjectPath in $ProjectPaths) {
-    $stackFile = Join-Path $ProjectPath ".claude\.wiw-stack"
+    $stackFile = Join-Path $ProjectPath ".claude\.ccb-stack"
 
     if (-not (Test-Path $stackFile)) {
-        Write-Host "[SKIP] $ProjectPath (.wiw-stack not found)" -ForegroundColor Yellow
+        Write-Host "[SKIP] $ProjectPath (.ccb-stack not found)" -ForegroundColor Yellow
         continue
     }
 
     $Stack = (Get-Content $stackFile -Raw).Trim()
     Write-Host "[$ProjectPath] stack=$Stack" -ForegroundColor Cyan
-    & "$WiwRoot\setup.ps1" $Stack $ProjectPath
+    & "$CcbRoot\setup.ps1" $Stack $ProjectPath
     Write-Host ""
 }

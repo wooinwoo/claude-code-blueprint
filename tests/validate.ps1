@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    wiw_claude-code 콘텐츠 검증
+    claude-code-blueprint 콘텐츠 검증
 
 .DESCRIPTION
     모든 레이어(base, common, react-next, nestjs)의 콘텐츠를 검증합니다.
@@ -22,7 +22,7 @@ $pass = 0
 $fail = 0
 
 Write-Host ""
-Write-Host "=== wiw_claude-code validate ===" -ForegroundColor Cyan
+Write-Host "=== claude-code-blueprint validate ===" -ForegroundColor Cyan
 Write-Host "Source: $TestRoot" -ForegroundColor Gray
 Write-Host ""
 

@@ -27,7 +27,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$WiwRoot = $PSScriptRoot
+$CcbRoot = $PSScriptRoot
 
 # 프로젝트 경로 확인
 if (-not (Test-Path $ProjectPath)) {
@@ -41,10 +41,10 @@ $claudeDir = Join-Path $ProjectPath ".claude"
 $DevStacks = @("react-next", "nestjs", "java-web")
 $IsDevStack = $Stack -in $DevStacks
 
-Write-Host "=== wiw_claude-code setup ===" -ForegroundColor Cyan
+Write-Host "=== claude-code-blueprint setup ===" -ForegroundColor Cyan
 Write-Host "Stack:   $Stack$(if (-not $IsDevStack) { ' (non-dev profile)' })" -ForegroundColor Gray
 Write-Host "Project: $ProjectPath" -ForegroundColor Gray
-Write-Host "Source:  $WiwRoot" -ForegroundColor Gray
+Write-Host "Source:  $CcbRoot" -ForegroundColor Gray
 Write-Host ""
 
 # .claude 폴더 생성
@@ -54,7 +54,7 @@ if (-not (Test-Path $claudeDir)) {
 }
 
 # 스택 정보 저장 (update.ps1용)
-$Stack | Out-File (Join-Path $claudeDir ".wiw-stack") -Encoding utf8 -NoNewline
+$Stack | Out-File (Join-Path $claudeDir ".ccb-stack") -Encoding utf8 -NoNewline
 
 # ============================================================
 # 공통 복사 함수
@@ -100,35 +100,35 @@ if (-not (Test-Path $rulesDir)) {
 Write-Host "[rules/] 복사" -ForegroundColor White
 
 if ($IsDevStack) {
-    # Dev stacks: base-common + base-typescript(조건) + wiw-common + wiw-stack
+    # Dev stacks: base-common + base-typescript(조건) + ccb-common + ccb-stack
     $rulesSources = @(
-        @{ Name = "base-common";    Path = "$WiwRoot\base\rules\common" }
+        @{ Name = "base-common";    Path = "$CcbRoot\base\rules\common" }
     )
     if ($Stack -ne "java-web") {
-        $rulesSources += @{ Name = "base-typescript"; Path = "$WiwRoot\base\rules\typescript" }
+        $rulesSources += @{ Name = "base-typescript"; Path = "$CcbRoot\base\rules\typescript" }
     }
     $rulesSources += @(
-        @{ Name = "wiw-common";     Path = "$WiwRoot\common\rules" },
-        @{ Name = "wiw-stack";      Path = "$WiwRoot\$Stack\rules" }
+        @{ Name = "ccb-common";     Path = "$CcbRoot\common\rules" },
+        @{ Name = "ccb-stack";      Path = "$CcbRoot\$Stack\rules" }
     )
 } else {
-    # Non-dev profiles: base-common에서 필요한 것만 + wiw-common + profile rules
+    # Non-dev profiles: base-common에서 필요한 것만 + ccb-common + profile rules
     # 개발 전용 룰(coding-style, testing, security, patterns 등) 제외
     $nonDevBaseRulesAllow = @("git-workflow.md", "agents.md")
 
     # base-common에서 허용 목록만 복사
-    $baseCommonTemp = Join-Path $env:TEMP "wiw-base-common-filtered"
+    $baseCommonTemp = Join-Path $env:TEMP "ccb-base-common-filtered"
     if (Test-Path $baseCommonTemp) { Remove-Item $baseCommonTemp -Recurse -Force }
     New-Item -ItemType Directory -Path $baseCommonTemp -Force | Out-Null
     foreach ($f in $nonDevBaseRulesAllow) {
-        $src = Join-Path "$WiwRoot\base\rules\common" $f
+        $src = Join-Path "$CcbRoot\base\rules\common" $f
         if (Test-Path $src) { Copy-Item $src $baseCommonTemp }
     }
 
     $rulesSources = @(
         @{ Name = "base-common";    Path = $baseCommonTemp },
-        @{ Name = "wiw-common";     Path = "$WiwRoot\common\rules" },
-        @{ Name = "wiw-$Stack";     Path = "$WiwRoot\$Stack\rules" }
+        @{ Name = "ccb-common";     Path = "$CcbRoot\common\rules" },
+        @{ Name = "ccb-$Stack";     Path = "$CcbRoot\$Stack\rules" }
     )
 }
 
@@ -149,9 +149,9 @@ if ($IsDevStack) {
         -TargetDir (Join-Path $claudeDir "agents") `
         -Label "agents/" `
         -Sources @(
-            "$WiwRoot\base\agents",
-            "$WiwRoot\common\agents",
-            "$WiwRoot\$Stack\agents"
+            "$CcbRoot\base\agents",
+            "$CcbRoot\common\agents",
+            "$CcbRoot\$Stack\agents"
         )
 } else {
     # Non-dev: profile agents only (base/common 개발 에이전트 불필요)
@@ -159,7 +159,7 @@ if ($IsDevStack) {
         -TargetDir (Join-Path $claudeDir "agents") `
         -Label "agents/" `
         -Sources @(
-            "$WiwRoot\$Stack\agents"
+            "$CcbRoot\$Stack\agents"
         )
 }
 
@@ -171,9 +171,9 @@ if ($IsDevStack) {
         -TargetDir (Join-Path $claudeDir "commands") `
         -Label "commands/" `
         -Sources @(
-            "$WiwRoot\base\commands",
-            "$WiwRoot\common\commands",
-            "$WiwRoot\$Stack\commands"
+            "$CcbRoot\base\commands",
+            "$CcbRoot\common\commands",
+            "$CcbRoot\$Stack\commands"
         ) -Recurse
 } else {
     # Non-dev: common의 일부 유틸 커맨드 + profile 커맨드
@@ -181,7 +181,7 @@ if ($IsDevStack) {
         -TargetDir (Join-Path $claudeDir "commands") `
         -Label "commands/" `
         -Sources @(
-            "$WiwRoot\$Stack\commands"
+            "$CcbRoot\$Stack\commands"
         ) -Recurse
 }
 
@@ -193,19 +193,19 @@ if ($IsDevStack) {
         -TargetDir (Join-Path $claudeDir "skills") `
         -Label "skills/" `
         -Sources @(
-            "$WiwRoot\base\skills",
-            "$WiwRoot\common\skills",
-            "$WiwRoot\$Stack\skills"
+            "$CcbRoot\base\skills",
+            "$CcbRoot\common\skills",
+            "$CcbRoot\$Stack\skills"
         ) -CountDirs
 } else {
     # Non-dev: base 스킬 중 개발 무관한 것만 + profile 스킬
     $nonDevBaseSkillsAllow = @("strategic-compact", "iterative-retrieval", "search-first")
 
-    $baseSkillsTemp = Join-Path $env:TEMP "wiw-base-skills-filtered"
+    $baseSkillsTemp = Join-Path $env:TEMP "ccb-base-skills-filtered"
     if (Test-Path $baseSkillsTemp) { Remove-Item $baseSkillsTemp -Recurse -Force }
     New-Item -ItemType Directory -Path $baseSkillsTemp -Force | Out-Null
     foreach ($s in $nonDevBaseSkillsAllow) {
-        $src = Join-Path "$WiwRoot\base\skills" $s
+        $src = Join-Path "$CcbRoot\base\skills" $s
         if (Test-Path $src) { Copy-Item $src $baseSkillsTemp -Recurse }
     }
 
@@ -214,7 +214,7 @@ if ($IsDevStack) {
         -Label "skills/" `
         -Sources @(
             $baseSkillsTemp,
-            "$WiwRoot\$Stack\skills"
+            "$CcbRoot\$Stack\skills"
         ) -CountDirs
 }
 
@@ -233,13 +233,13 @@ if ($IsDevStack) {
     Copy-LayerDir `
         -TargetDir $hooksDir `
         -Label "hooks/" `
-        -Sources @("$WiwRoot\base\hooks") -Recurse
+        -Sources @("$CcbRoot\base\hooks") -Recurse
 } else {
     # Non-dev: profile 전용 hooks (base hooks는 개발 도구 중심이라 불필요)
     Copy-LayerDir `
         -TargetDir $hooksDir `
         -Label "hooks/" `
-        -Sources @("$WiwRoot\$Stack\hooks") -Recurse
+        -Sources @("$CcbRoot\$Stack\hooks") -Recurse
 }
 
 # ============================================================
@@ -256,15 +256,15 @@ if ($IsDevStack) {
     Copy-LayerDir `
         -TargetDir $contextsDir `
         -Label "contexts/" `
-        -Sources @("$WiwRoot\base\contexts") -Recurse
+        -Sources @("$CcbRoot\base\contexts") -Recurse
 } else {
     # Non-dev: base contexts + profile contexts
     Copy-LayerDir `
         -TargetDir $contextsDir `
         -Label "contexts/" `
         -Sources @(
-            "$WiwRoot\base\contexts",
-            "$WiwRoot\$Stack\contexts"
+            "$CcbRoot\base\contexts",
+            "$CcbRoot\$Stack\contexts"
         ) -Recurse
 }
 
@@ -282,7 +282,7 @@ if ($IsDevStack) {
     Copy-LayerDir `
         -TargetDir $scriptsDir `
         -Label "scripts/" `
-        -Sources @("$WiwRoot\base\scripts") -Recurse
+        -Sources @("$CcbRoot\base\scripts") -Recurse
 
     # scripts/ npm install (node-notifier 등)
     $scriptsPkg = Join-Path $scriptsDir "package.json"
@@ -299,9 +299,9 @@ if ($IsDevStack) {
 }
 
 # ============================================================
-# scripts-wiw/ - 파일 복사 (common: MCP 래퍼 스크립트)
+# scripts-ccb/ - 파일 복사 (common: MCP 래퍼 스크립트)
 # ============================================================
-$scriptsWiwDir = Join-Path $claudeDir "scripts-wiw"
+$scriptsWiwDir = Join-Path $claudeDir "scripts-ccb"
 if (Test-Path $scriptsWiwDir) {
     $item = Get-Item $scriptsWiwDir -Force -ErrorAction SilentlyContinue
     if ($item -and ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
@@ -310,8 +310,8 @@ if (Test-Path $scriptsWiwDir) {
 }
 Copy-LayerDir `
     -TargetDir $scriptsWiwDir `
-    -Label "scripts-wiw/" `
-    -Sources @("$WiwRoot\common\scripts") -Recurse
+    -Label "scripts-ccb/" `
+    -Sources @("$CcbRoot\common\scripts") -Recurse
 
 # ============================================================
 # settings.json — 권한 설정 (없을 때만)
@@ -320,9 +320,9 @@ Write-Host ""
 Write-Host "[settings] 권한 설정" -ForegroundColor White
 $settingsJson = Join-Path $claudeDir "settings.json"
 if ($IsDevStack) {
-    $settingsTemplate = Join-Path $WiwRoot "common\settings.json"
+    $settingsTemplate = Join-Path $CcbRoot "common\settings.json"
 } else {
-    $settingsTemplate = Join-Path $WiwRoot "$Stack\settings.json"
+    $settingsTemplate = Join-Path $CcbRoot "$Stack\settings.json"
 }
 if (-not (Test-Path $settingsJson) -and (Test-Path $settingsTemplate)) {
     Copy-Item $settingsTemplate $settingsJson
@@ -338,9 +338,9 @@ Write-Host ""
 Write-Host "[MCP] 설정" -ForegroundColor White
 $mcpJson = Join-Path $ProjectPath ".mcp.json"
 if ($IsDevStack) {
-    $mcpTemplate = Join-Path $WiwRoot "common\mcp-configs\.mcp.json"
+    $mcpTemplate = Join-Path $CcbRoot "common\mcp-configs\.mcp.json"
 } else {
-    $mcpTemplate = Join-Path $WiwRoot "$Stack\mcp-configs\.mcp.json"
+    $mcpTemplate = Join-Path $CcbRoot "$Stack\mcp-configs\.mcp.json"
 }
 if (-not (Test-Path $mcpJson) -and (Test-Path $mcpTemplate)) {
     Copy-Item $mcpTemplate $mcpJson
@@ -351,7 +351,7 @@ if (-not (Test-Path $mcpJson) -and (Test-Path $mcpTemplate)) {
 
 # .env 파일 안내 (.env.example 복사)
 $envFile = Join-Path $claudeDir ".env"
-$envExample = Join-Path $WiwRoot "common\.env.example"
+$envExample = Join-Path $CcbRoot "common\.env.example"
 if (-not (Test-Path $envFile) -and (Test-Path $envExample)) {
     Copy-Item $envExample $envFile
     Write-Host "  [NEW] .claude/.env 생성 (토큰을 직접 입력하세요)" -ForegroundColor Yellow
@@ -400,8 +400,8 @@ if (-not (Test-Path $claudeMd)) {
 
 ## Setup
 
-- wiw_claude-code: $Stack
-- template version: $(Get-Content "$WiwRoot\VERSION" -ErrorAction SilentlyContinue)
+- claude-code-blueprint: $Stack
+- template version: $(Get-Content "$CcbRoot\VERSION" -ErrorAction SilentlyContinue)
 "@ | Out-File $claudeMd -Encoding utf8
     } elseif ($Stack -eq "designer") {
         @"
@@ -424,8 +424,8 @@ if (-not (Test-Path $claudeMd)) {
 
 ## Setup
 
-- wiw_claude-code: $Stack
-- template version: $(Get-Content "$WiwRoot\VERSION" -ErrorAction SilentlyContinue)
+- claude-code-blueprint: $Stack
+- template version: $(Get-Content "$CcbRoot\VERSION" -ErrorAction SilentlyContinue)
 "@ | Out-File $claudeMd -Encoding utf8
     } elseif ($Stack -eq "planner") {
         @"
@@ -447,8 +447,8 @@ if (-not (Test-Path $claudeMd)) {
 
 ## Setup
 
-- wiw_claude-code: $Stack
-- template version: $(Get-Content "$WiwRoot\VERSION" -ErrorAction SilentlyContinue)
+- claude-code-blueprint: $Stack
+- template version: $(Get-Content "$CcbRoot\VERSION" -ErrorAction SilentlyContinue)
 "@ | Out-File $claudeMd -Encoding utf8
     }
     Write-Host ""
@@ -460,9 +460,9 @@ if (-not (Test-Path $claudeMd)) {
 # ============================================================
 $gitignore = Join-Path $ProjectPath ".gitignore"
 $ignoreEntries = @(
-    "# wiw_claude-code (setup.ps1로 관리)"
+    "# claude-code-blueprint (setup.ps1로 관리)"
     ".claude/.env"
-    ".claude/.wiw-stack"
+    ".claude/.ccb-stack"
     ".claude/settings.local.json"
     ".claude/homunculus/"
     "CLAUDE.local.md"
@@ -473,7 +473,7 @@ $ignoreEntries = @(
 
 if (Test-Path $gitignore) {
     $existing = Get-Content $gitignore -Raw
-    if ($existing -notmatch "wiw_claude-code") {
+    if ($existing -notmatch "claude-code-blueprint") {
         $ignoreEntries -join "`n" | Add-Content $gitignore
         Write-Host ""
         Write-Host "  [OK] .gitignore 업데이트" -ForegroundColor Green
@@ -493,23 +493,23 @@ Write-Host ""
 
 if ($IsDevStack) {
     Write-Host "설치 내역 (모두 파일 복사):" -ForegroundColor White
-    Write-Host "  rules/        base + wiw-common + wiw-$Stack" -ForegroundColor Gray
+    Write-Host "  rules/        base + ccb-common + ccb-$Stack" -ForegroundColor Gray
     Write-Host "  agents/       base + common + $Stack" -ForegroundColor Gray
     Write-Host "  commands/     base + common + $Stack" -ForegroundColor Gray
     Write-Host "  skills/       base + common + $Stack" -ForegroundColor Gray
     Write-Host "  hooks/        base" -ForegroundColor Gray
     Write-Host "  scripts/      base (hook 스크립트)" -ForegroundColor Gray
-    Write-Host "  scripts-wiw/  common (MCP 래퍼)" -ForegroundColor Gray
+    Write-Host "  scripts-ccb/  common (MCP 래퍼)" -ForegroundColor Gray
     Write-Host "  .mcp.json     MCP 서버 설정" -ForegroundColor Gray
 } else {
     Write-Host "설치 내역 ($Stack profile):" -ForegroundColor White
-    Write-Host "  rules/        base-common + wiw-common + $Stack" -ForegroundColor Gray
+    Write-Host "  rules/        base-common + ccb-common + $Stack" -ForegroundColor Gray
     Write-Host "  agents/       $Stack" -ForegroundColor Gray
     Write-Host "  commands/     $Stack" -ForegroundColor Gray
     Write-Host "  skills/       base + $Stack" -ForegroundColor Gray
     Write-Host "  hooks/        $Stack" -ForegroundColor Gray
     Write-Host "  contexts/     base + $Stack" -ForegroundColor Gray
-    Write-Host "  scripts-wiw/  common (MCP 래퍼)" -ForegroundColor Gray
+    Write-Host "  scripts-ccb/  common (MCP 래퍼)" -ForegroundColor Gray
     Write-Host "  .mcp.json     $Stack MCP 서버 설정" -ForegroundColor Gray
 }
 
@@ -524,4 +524,4 @@ if ($IsDevStack) {
 }
 Write-Host "  $(if ($IsDevStack) { '4' } else { '3' }). .mcp.json 에서 필요 없는 MCP 서버 제거" -ForegroundColor Gray
 Write-Host ""
-Write-Host "wiw_claude-code 업데이트 후 setup.ps1 재실행하면 반영됩니다." -ForegroundColor DarkGray
+Write-Host "claude-code-blueprint 업데이트 후 setup.ps1 재실행하면 반영됩니다." -ForegroundColor DarkGray

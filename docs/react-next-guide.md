@@ -210,7 +210,7 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    subgraph template["wiw_claude-code (공유)"]
+    subgraph template["claude-code-blueprint (공유)"]
         base["base/ (ECC)"]
         common["common/ (회사)"]
         stack["react-next/ (스택)"]

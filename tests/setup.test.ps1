@@ -15,8 +15,8 @@
 #>
 
 $ErrorActionPreference = "Stop"
-$WiwRoot = Split-Path $PSScriptRoot -Parent
-$TestRoot = Join-Path $env:TEMP "wiw-test-$(Get-Random)"
+$CcbRoot = Split-Path $PSScriptRoot -Parent
+$TestRoot = Join-Path $env:TEMP "ccb-test-$(Get-Random)"
 
 $pass = 0
 $fail = 0
@@ -49,8 +49,8 @@ function Count-Dirs($path) {
 
 # ============================================================
 Write-Host ""
-Write-Host "=== wiw_claude-code setup.ps1 test ===" -ForegroundColor Cyan
-Write-Host "Source:  $WiwRoot" -ForegroundColor Gray
+Write-Host "=== claude-code-blueprint setup.ps1 test ===" -ForegroundColor Cyan
+Write-Host "Source:  $CcbRoot" -ForegroundColor Gray
 Write-Host "TempDir: $TestRoot" -ForegroundColor Gray
 Write-Host ""
 
@@ -59,24 +59,24 @@ Write-Host ""
 # ============================================================
 Write-Host "[1/6] source structure" -ForegroundColor White
 
-Assert (Test-Path "$WiwRoot\base\agents")       "base/agents"
-Assert (Test-Path "$WiwRoot\base\commands")      "base/commands"
-Assert (Test-Path "$WiwRoot\base\skills")        "base/skills"
-Assert (Test-Path "$WiwRoot\base\rules\common")  "base/rules/common"
-Assert (Test-Path "$WiwRoot\base\hooks")         "base/hooks"
-Assert (Test-Path "$WiwRoot\common\agents")      "common/agents"
-Assert (Test-Path "$WiwRoot\common\commands")    "common/commands"
-Assert (Test-Path "$WiwRoot\common\rules")       "common/rules"
-Assert (Test-Path "$WiwRoot\common\scripts")     "common/scripts"
-Assert (Test-Path "$WiwRoot\common\mcp-configs\.mcp.json") "common/mcp-configs/.mcp.json"
-Assert (Test-Path "$WiwRoot\common\.env.example") ".env.example"
-Assert (Test-Path "$WiwRoot\react-next\agents")  "react-next/agents"
-Assert (Test-Path "$WiwRoot\react-next\commands") "react-next/commands"
-Assert (Test-Path "$WiwRoot\react-next\rules")   "react-next/rules"
-Assert (Test-Path "$WiwRoot\react-next\skills")  "react-next/skills"
-Assert (Test-Path "$WiwRoot\nestjs\agents")      "nestjs/agents"
-Assert (Test-Path "$WiwRoot\nestjs\commands")    "nestjs/commands"
-Assert (Test-Path "$WiwRoot\nestjs\rules")       "nestjs/rules"
+Assert (Test-Path "$CcbRoot\base\agents")       "base/agents"
+Assert (Test-Path "$CcbRoot\base\commands")      "base/commands"
+Assert (Test-Path "$CcbRoot\base\skills")        "base/skills"
+Assert (Test-Path "$CcbRoot\base\rules\common")  "base/rules/common"
+Assert (Test-Path "$CcbRoot\base\hooks")         "base/hooks"
+Assert (Test-Path "$CcbRoot\common\agents")      "common/agents"
+Assert (Test-Path "$CcbRoot\common\commands")    "common/commands"
+Assert (Test-Path "$CcbRoot\common\rules")       "common/rules"
+Assert (Test-Path "$CcbRoot\common\scripts")     "common/scripts"
+Assert (Test-Path "$CcbRoot\common\mcp-configs\.mcp.json") "common/mcp-configs/.mcp.json"
+Assert (Test-Path "$CcbRoot\common\.env.example") ".env.example"
+Assert (Test-Path "$CcbRoot\react-next\agents")  "react-next/agents"
+Assert (Test-Path "$CcbRoot\react-next\commands") "react-next/commands"
+Assert (Test-Path "$CcbRoot\react-next\rules")   "react-next/rules"
+Assert (Test-Path "$CcbRoot\react-next\skills")  "react-next/skills"
+Assert (Test-Path "$CcbRoot\nestjs\agents")      "nestjs/agents"
+Assert (Test-Path "$CcbRoot\nestjs\commands")    "nestjs/commands"
+Assert (Test-Path "$CcbRoot\nestjs\rules")       "nestjs/rules"
 
 # ============================================================
 # 2-3. 스택별 설치 테스트
@@ -89,23 +89,23 @@ foreach ($Stack in @("react-next", "nestjs")) {
     Write-Host ""
     Write-Host "[$phase] $Stack install" -ForegroundColor White
 
-    & "$WiwRoot\setup.ps1" $Stack $projectDir 2>&1 | Out-Null
+    & "$CcbRoot\setup.ps1" $Stack $projectDir 2>&1 | Out-Null
 
     $claudeDir = Join-Path $projectDir ".claude"
 
     # --- 기본 구조 ---
     Assert (Test-Path $claudeDir)                           "$Stack .claude/ created"
-    Assert (Test-Path "$claudeDir\.wiw-stack")              "$Stack .wiw-stack created"
-    $stackContent = (Get-Content "$claudeDir\.wiw-stack" -Raw).Trim()
-    Assert ($stackContent -eq $Stack)                       "$Stack .wiw-stack content correct"
+    Assert (Test-Path "$claudeDir\.ccb-stack")              "$Stack .ccb-stack created"
+    $stackContent = (Get-Content "$claudeDir\.ccb-stack" -Raw).Trim()
+    Assert ($stackContent -eq $Stack)                       "$Stack .ccb-stack content correct"
 
     # --- Rules (복사) ---
     Assert (Test-Path "$claudeDir\rules\base-common")       "$Stack rules/base-common exists"
     Assert (Test-Path "$claudeDir\rules\base-typescript")    "$Stack rules/base-typescript exists"
-    Assert (Test-Path "$claudeDir\rules\wiw-common")         "$Stack rules/wiw-common exists"
-    Assert (Test-Path "$claudeDir\rules\wiw-stack")          "$Stack rules/wiw-stack exists"
+    Assert (Test-Path "$claudeDir\rules\ccb-common")         "$Stack rules/ccb-common exists"
+    Assert (Test-Path "$claudeDir\rules\ccb-stack")          "$Stack rules/ccb-stack exists"
 
-    $stackRuleCount = Count-Files "$claudeDir\rules\wiw-stack"
+    $stackRuleCount = Count-Files "$claudeDir\rules\ccb-stack"
     if ($Stack -eq "react-next") {
         Assert ($stackRuleCount -ge 4)  "$Stack stack rules: $stackRuleCount (min 4)"
     } else {
@@ -136,12 +136,12 @@ foreach ($Stack in @("react-next", "nestjs")) {
         Assert ($skillCount -ge 7)      "$Stack skills: $skillCount (min 7)"
     }
 
-    # --- hooks/contexts/scripts/scripts-wiw (복사) ---
+    # --- hooks/contexts/scripts/scripts-ccb (복사) ---
     Assert (Test-Path "$claudeDir\hooks\hooks.json")   "$Stack hooks/hooks.json copied"
     Assert (Test-Path "$claudeDir\scripts\hooks")      "$Stack scripts/hooks/ copied"
     Assert (Test-Path "$claudeDir\scripts\lib")        "$Stack scripts/lib/ copied"
-    $scriptWiwCount = Count-Files "$claudeDir\scripts-wiw"
-    Assert ($scriptWiwCount -ge 3)                     "$Stack scripts-wiw: $scriptWiwCount (min 3)"
+    $scriptCcbCount = Count-Files "$claudeDir\scripts-ccb"
+    Assert ($scriptCcbCount -ge 3)                     "$Stack scripts-ccb: $scriptCcbCount (min 3)"
 
     # --- .mcp.json ---
     $mcpJson = Join-Path $projectDir ".mcp.json"
@@ -168,7 +168,7 @@ foreach ($Stack in @("react-next", "nestjs")) {
     $gitignore = Join-Path $projectDir ".gitignore"
     Assert (Test-Path $gitignore)                  "$Stack .gitignore created"
     $giContent = Get-Content $gitignore -Raw
-    Assert ($giContent -match "wiw_claude-code")   "$Stack .gitignore has marker"
+    Assert ($giContent -match "claude-code-blueprint")   "$Stack .gitignore has marker"
     Assert ($giContent -match "\.claude/\.env")    "$Stack .gitignore has .env"
 }
 
@@ -193,7 +193,7 @@ $mdPath = Join-Path $reactDir "CLAUDE.md"
 Add-Content $mdPath "`n## Custom Section"
 
 # 재실행
-& "$WiwRoot\setup.ps1" "react-next" $reactDir 2>&1 | Out-Null
+& "$CcbRoot\setup.ps1" "react-next" $reactDir 2>&1 | Out-Null
 
 # 기존 파일 보존 확인
 $mcpAfter = Get-Content $mcpPath -Raw | ConvertFrom-Json
@@ -208,7 +208,7 @@ Assert ($mdAfter -match "Custom Section")               "idempotent: CLAUDE.md c
 
 # .gitignore 중복 안 됨
 $giAfter = Get-Content (Join-Path $reactDir ".gitignore") -Raw
-$markerCount = ([regex]::Matches($giAfter, "wiw_claude-code")).Count
+$markerCount = ([regex]::Matches($giAfter, "claude-code-blueprint")).Count
 Assert ($markerCount -eq 1)                             "idempotent: .gitignore no duplicates ($markerCount)"
 
 # 파일 복사는 갱신됨
@@ -222,13 +222,13 @@ Write-Host ""
 Write-Host "[5/6] update.ps1" -ForegroundColor White
 
 $nestDir = Join-Path $TestRoot "nestjs"
-& "$WiwRoot\update.ps1" $nestDir 2>&1 | Out-Null
+& "$CcbRoot\update.ps1" $nestDir 2>&1 | Out-Null
 
 $agentAfterUpdate = Count-Files (Join-Path $nestDir ".claude\agents")
 Assert ($agentAfterUpdate -ge 12)                       "update: nestjs agents refreshed ($agentAfterUpdate)"
 
-$stackAfterUpdate = (Get-Content (Join-Path $nestDir ".claude\.wiw-stack") -Raw).Trim()
-Assert ($stackAfterUpdate -eq "nestjs")                 "update: .wiw-stack preserved"
+$stackAfterUpdate = (Get-Content (Join-Path $nestDir ".claude\.ccb-stack") -Raw).Trim()
+Assert ($stackAfterUpdate -eq "nestjs")                 "update: .ccb-stack preserved"
 
 # ============================================================
 # 6. 커맨드 중복 검증

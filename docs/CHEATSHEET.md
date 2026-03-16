@@ -74,7 +74,7 @@
 
 ```powershell
 # 1. 설치
-cd C:\_project\template\wiw_claude-code
+cd C:\_project\template\claude-code-blueprint
 .\setup.ps1 react-next C:\path\to\my-project
 
 # 2. 프로젝트 설명 작성
@@ -88,7 +88,7 @@ cd C:\_project\template\wiw_claude-code
 ## 업데이트
 
 ```powershell
-cd C:\_project\template\wiw_claude-code
+cd C:\_project\template\claude-code-blueprint
 git pull
 .\update.ps1 C:\path\to\my-project
 ```

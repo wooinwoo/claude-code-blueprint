@@ -64,6 +64,35 @@ git add src/auth/login.ts src/auth/login.test.ts
 - `fix(order): resolve race condition in payment callback`
 - `refactor(user): extract email validation to value object`
 
+## Few-shot Example
+
+**git diff 출력:**
+```diff
+--- a/src/auth/jwt.strategy.ts
++++ b/src/auth/jwt.strategy.ts
+@@ -12,6 +12,10 @@ export class JwtStrategy {
+   async validate(payload: JwtPayload): Promise<UserContext> {
+-    return { userId: payload.sub };
++    const user = await this.userRepo.findById(payload.sub);
++    if (!user || user.isDeleted) {
++      throw new UnauthorizedException('User not found or deactivated');
++    }
++    return { userId: user.id, role: user.role };
+   }
+```
+
+**분석 과정:**
+1. `src/auth/` 경로 → scope: `auth`
+2. 기존 동작을 수정 (validate 로직 보강) → 버그 수정인가? 기능 추가인가?
+3. 삭제된 유저/비활성 유저 체크 추가 → 보안 취약점 수정 = `fix`
+4. 변경 목적: "삭제/비활성 유저의 JWT 토큰이 여전히 유효했던 문제"
+
+**결과:**
+```bash
+git add src/auth/jwt.strategy.ts
+git commit -m "fix(auth): reject JWT tokens for deleted or deactivated users"
+```
+
 ## 금지사항
 
 - `git add -A` / `git add .` 사용 금지

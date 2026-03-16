@@ -2,11 +2,11 @@
   "mcpServers": {
     "mcp-atlassian": {
       "command": "cmd",
-      "args": ["/c", "node", ".claude/scripts-wiw/run-jira-mcp.cjs"]
+      "args": ["/c", "node", ".claude/scripts-ccb/run-jira-mcp.cjs"]
     },
     "github": {
       "command": "cmd",
-      "args": ["/c", "node", ".claude/scripts-wiw/run-github-mcp.cjs"]
+      "args": ["/c", "node", ".claude/scripts-ccb/run-github-mcp.cjs"]
     },
     "context7": {
       "command": "cmd",
@@ -24,7 +24,7 @@
       "command": "cmd",
       "args": ["/c", "uvx", "awslabs.core-mcp-server@latest"],
       "env": {
-        "AWS_PROFILE": "wiw",
+        "AWS_PROFILE": "ccb",
         "AWS_REGION": "ap-northeast-2",
         "FASTMCP_LOG_LEVEL": "WARNING"
       }
@@ -33,7 +33,7 @@
       "command": "cmd",
       "args": ["/c", "uvx", "awslabs.aws-api-mcp-server@latest"],
       "env": {
-        "AWS_PROFILE": "wiw",
+        "AWS_PROFILE": "ccb",
         "AWS_REGION": "ap-northeast-2",
         "FASTMCP_LOG_LEVEL": "WARNING"
       }
@@ -44,7 +44,7 @@
     },
     "mysql": {
       "command": "cmd",
-      "args": ["/c", "node", ".claude/scripts-wiw/run-db-mcp.cjs"]
+      "args": ["/c", "node", ".claude/scripts-ccb/run-db-mcp.cjs"]
     }
   }
 }

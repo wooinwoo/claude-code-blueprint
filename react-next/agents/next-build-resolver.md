@@ -1,6 +1,7 @@
 ---
 name: next-build-resolver
 description: "Next.js/Vite build, TypeScript compilation, and bundler error resolution specialist. Fixes build errors, type errors, and ESLint warnings with minimal changes. Use when builds fail."
+model: sonnet
 tools:
   - Read
   - Write
