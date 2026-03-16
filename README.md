@@ -4,9 +4,9 @@
 
 # CCB — Claude Code Blueprint
 
-> One command. Four roles. Every project configured.
+> 커맨드 하나. 역할 넷. 모든 프로젝트에 설정 완료.
 
-A production-grade Claude Code configuration system. Rules, commands, agents, skills, hooks, and MCP servers — layered by role, installed in one line.
+Claude Code 설정 시스템. Rules, Commands, Agents, Skills, Hooks, MCP 서버를 역할별로 조합해서 한 줄로 설치합니다.
 
 ```powershell
 .\setup.ps1 react-next C:\path\to\project
@@ -20,15 +20,15 @@ A production-grade Claude Code configuration system. Rules, commands, agents, sk
 ┌─────────────────────────────────────────────────┐
 │  LAYER 3: Stack / Profile                       │
 │  react-next │ nestjs │ designer │ planner       │
-│  Role-specific agents, commands, rules, skills  │
+│  역할 전용 에이전트, 커맨드, 룰, 스킬           │
 ├─────────────────────────────────────────────────┤
 │  LAYER 2: Common                                │
 │  /commit, /jira, /code-review                   │
-│  PR rules, MCP wrappers, shared settings        │
+│  PR 규칙, MCP 래퍼, 공통 설정                   │
 ├─────────────────────────────────────────────────┤
-│  LAYER 1: Base (swappable)                      │
-│  Community agents, rules, skills                │
-│  Synced via sync.ps1 — never edit directly      │
+│  LAYER 1: Base (교체 가능)                       │
+│  커뮤니티 에이전트, 룰, 스킬                     │
+│  sync.ps1로 동기화 — 직접 수정 금지              │
 └─────────────────────────────────────────────────┘
                       │
                       │ setup.ps1
@@ -36,121 +36,121 @@ A production-grade Claude Code configuration system. Rules, commands, agents, sk
               project/.claude/
 ```
 
-Each layer builds on the previous. Base is **swappable** — currently [everything-claude-code](https://github.com/affaan-m/everything-claude-code), but can be replaced with any source.
+각 계층이 아래를 기반으로 쌓입니다. Base는 **교체 가능** — 현재 [everything-claude-code](https://github.com/affaan-m/everything-claude-code)를 쓰지만, 어떤 소스든 갈아끼울 수 있습니다.
 
 ---
 
-## What's Included
+## 구성 요소
 
-### Profiles
+### 프로필
 
-| Profile | Target | Agents | Commands | Rules | MCP |
-|---------|--------|--------|----------|-------|-----|
-| **react-next** | React/Next.js dev | 15 | 11 | 18 | 9 |
-| **nestjs** | NestJS backend dev | 15 | 10 | 15 | 9 |
-| **designer** | UI/UX + publishing | 3 | 6 | 4 | 6 |
-| **planner** | PM / product planning | 3 | 11 | 3 | 4 |
+| Profile | 대상 | Agents | Commands | Rules | MCP |
+|---------|------|--------|----------|-------|-----|
+| **react-next** | React/Next.js 개발자 | 15 | 11 | 18 | 9 |
+| **nestjs** | NestJS 백엔드 개발자 | 15 | 10 | 15 | 9 |
+| **designer** | UI/UX + 퍼블리싱 | 3 | 6 | 4 | 6 |
+| **planner** | PM / 기획자 | 3 | 11 | 3 | 4 |
 
 ### Dev (react-next, nestjs)
 
-| Command | Description |
-|---------|-------------|
-| `/orchestrate` | 6-Phase pipeline: design → branch → implement → review → PR → cleanup |
-| `/code-review` | 5 reviewer agents in parallel (code, convention, security, performance, feasibility) |
-| `/build-fix` | lint → type → build error auto-fix loop |
-| `/test-coverage` | Coverage analysis + auto-generate missing tests |
-| `/commit` | Conventional commit with scope detection |
+| Command | 설명 |
+|---------|------|
+| `/orchestrate` | 6-Phase 파이프라인: 설계 → 브랜치 → 구현 → 리뷰 → PR → 정리 |
+| `/code-review` | 5개 리뷰 에이전트 병렬 실행 (코드, 컨벤션, 보안, 성능, 타당성) |
+| `/build-fix` | lint → type → build 에러 자동 수정 루프 |
+| `/test-coverage` | 커버리지 분석 + 미커버 테스트 자동 생성 |
+| `/commit` | Conventional commit (스코프 자동 감지) |
 
 ### Designer
 
-| Command | Description |
-|---------|-------------|
-| `/design-system` | Token audit, component analysis, pattern suggestions |
-| `/publish-check` | Lighthouse + Playwright responsive + source static analysis |
-| `/figma-to-code` | Figma Dev Mode MCP → code generation |
-| `/design-review` | 3 parallel agents: design, a11y, markup |
-| `/design-qa` | Figma spec vs implementation comparison |
-| `/discover` | Component inventory, unused/similar detection |
+| Command | 설명 |
+|---------|------|
+| `/design-system` | 토큰 감사, 컴포넌트 분석, 패턴 제안 |
+| `/publish-check` | Lighthouse + Playwright 반응형 + 소스 정적 분석 |
+| `/figma-to-code` | Figma Dev Mode MCP → 코드 생성 |
+| `/design-review` | 3개 에이전트 병렬 리뷰: 디자인, 접근성, 마크업 |
+| `/design-qa` | Figma 시안 vs 구현물 비교 |
+| `/discover` | 컴포넌트 인벤토리, 미사용/유사 컴포넌트 탐지 |
 
 ### Planner
 
-| Command | Description |
-|---------|-------------|
-| `/research` | Research plan → WebSearch execution (market/user/tech) |
-| `/prd` | 10-section PRD with completeness validation |
-| `/story-map` | Walking Skeleton MVP verification |
-| `/competitive-analysis` | Feature matrix + SWOT from WebSearch |
-| `/okr` | OKR creation with quality gates (qualitative O, quantitative KR) |
-| `/spec` | Lightweight feature spec with AC testability check |
-| `/sprint-plan` | Capacity-based sprint planning with carryover |
-| `/retro` | 4L / Starfish / Sailboat frameworks |
-| `/launch` | Launch checklist + rollback plan + release notes |
-| `/weekly-update` | Weekly report (default / team / exec modes) |
-| `/roadmap` | RICE scoring + OKR alignment |
+| Command | 설명 |
+|---------|------|
+| `/research` | 리서치 플랜 수립 → WebSearch 실행 (market/user/tech) |
+| `/prd` | 10섹션 PRD 생성 (완전성 자동 검증) |
+| `/story-map` | Walking Skeleton MVP 검증 |
+| `/competitive-analysis` | 기능 매트릭스 + SWOT (WebSearch 기반) |
+| `/okr` | OKR 생성/검토 (정성적 O, 정량적 KR 자동 검증) |
+| `/spec` | 경량 기능 명세 (수용기준 테스트 가능성 체크) |
+| `/sprint-plan` | 용량 기반 스프린트 계획 (캐리오버 포함) |
+| `/retro` | 4L / Starfish / Sailboat 프레임워크 |
+| `/launch` | 런치 체크리스트 + 롤백 계획 + 릴리스 노트 |
+| `/weekly-update` | 주간 리포트 (default / team / exec 모드) |
+| `/roadmap` | RICE 스코어링 + OKR 연계 |
 
-> All planner commands work without Jira. Graceful fallback to manual input.
+> 모든 Planner 커맨드는 Jira 없이도 동작합니다. 미연결 시 수동 입력으로 자동 전환.
 
 ---
 
 ## Quick Start
 
 ```powershell
-# 1. Clone
+# 1. 클론
 git clone https://github.com/rstful/claude-code-blueprint.git
 
-# 2. Install to your project
+# 2. 프로젝트에 설치
 cd claude-code-blueprint
 .\setup.ps1 react-next C:\path\to\my-project
 
-# 3. Set tokens (optional)
+# 3. 토큰 설정 (선택)
 notepad C:\path\to\my-project\.claude\.env
 # GITHUB_PAT=ghp_xxx
 # JIRA_TOKEN=xxx
 
-# 4. Write CLAUDE.md
-# Project overview, tech stack, structure, conventions
+# 4. CLAUDE.md 작성
+# 프로젝트 개요, 기술 스택, 구조, 컨벤션
 ```
 
-### Update
+### 업데이트
 
 ```powershell
 cd claude-code-blueprint && git pull
-.\setup.ps1 react-next C:\path\to\my-project   # re-install
+.\setup.ps1 react-next C:\path\to\my-project   # 재설치
 ```
 
 ---
 
 ## MCP Servers
 
-| Server | Purpose | Profiles |
-|--------|---------|----------|
-| github | PR, issues, repos | all |
-| mcp-atlassian | Jira issue management | all |
-| context7 | Live npm/framework docs | all |
-| memory | Cross-session persistence | all |
-| figma-dev-mode | Figma design integration | designer |
-| playwright | Browser automation | designer, dev |
-| mysql | Database queries | dev |
-| aws | AWS services | dev |
+| Server | 용도 | 프로필 |
+|--------|------|--------|
+| github | PR, Issue, Repo 관리 | 전체 |
+| mcp-atlassian | Jira 이슈 관리 | 전체 |
+| context7 | npm/프레임워크 라이브 문서 | 전체 |
+| memory | 세션 간 영구 메모리 | 전체 |
+| figma-dev-mode | Figma 시안 연동 | designer |
+| playwright | 브라우저 자동화 | designer, dev |
+| mysql | DB 쿼리 | dev |
+| aws | AWS 서비스 | dev |
 
 ---
 
-## Customization
+## 커스터마이징
 
 ```
-common/rules/         → applies to all profiles
-common/commands/       → applies to all profiles
-react-next/rules/     → React projects only
-designer/commands/     → designer profile only
-planner/agents/        → planner profile only
+common/rules/         → 모든 프로필에 적용
+common/commands/       → 모든 프로필에 적용
+react-next/rules/     → React 프로젝트에만 적용
+designer/commands/     → 디자이너 프로필에만 적용
+planner/agents/        → 기획자 프로필에만 적용
 ```
 
-`base/` is overwritten by `sync.ps1`. To modify base behavior, override in `common/` or your stack folder.
+`base/`는 `sync.ps1`이 덮어씁니다. Base 동작을 수정하려면 `common/` 또는 스택 폴더에서 override하세요.
 
 ### Exclude System
 
 ```jsonc
-// exclude.json — skip these from upstream sync
+// exclude.json — upstream 동기화 시 제외할 항목
 {
   "rules": ["golang", "python"],
   "agents": ["go-reviewer.md"],
@@ -158,23 +158,23 @@ planner/agents/        → planner profile only
 }
 ```
 
-Excluded items are moved to `base/_excluded/` (preserved for reference, not deleted).
+제외된 항목은 `base/_excluded/`에 보관됩니다 (삭제되지 않음).
 
 ---
 
-## Post-Install Checklist
+## 설치 후 할 일
 
-1. **CLAUDE.md** — Write project overview, tech stack, structure
-2. **.claude/.env** — Add tokens (GITHUB_PAT, JIRA_TOKEN)
-3. **.mcp.json** — Remove unused MCP servers
-4. **.claude/rules/project.md** — Add project-specific rules (optional)
+1. **CLAUDE.md** — 프로젝트 개요, 기술 스택, 구조 작성
+2. **.claude/.env** — 토큰 입력 (GITHUB_PAT, JIRA_TOKEN)
+3. **.mcp.json** — 안 쓰는 MCP 서버 제거
+4. **.claude/rules/project.md** — 프로젝트 전용 규칙 추가 (선택)
 
 ---
 
-## References
+## 참고
 
 - Base upstream: [everything-claude-code](https://github.com/affaan-m/everything-claude-code)
-- [CLAUDE.md Guide](https://velog.io/@surim014/claude-md-guide)
+- [CLAUDE.md 가이드](https://velog.io/@surim014/claude-md-guide)
 
 ---
 
