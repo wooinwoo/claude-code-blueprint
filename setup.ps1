@@ -112,9 +112,21 @@ if ($IsDevStack) {
         @{ Name = "wiw-stack";      Path = "$WiwRoot\$Stack\rules" }
     )
 } else {
-    # Non-dev profiles: base-common + wiw-common + profile rules (base-typescript 스킵)
+    # Non-dev profiles: base-common에서 필요한 것만 + wiw-common + profile rules
+    # 개발 전용 룰(coding-style, testing, security, patterns 등) 제외
+    $nonDevBaseRulesAllow = @("git-workflow.md", "agents.md")
+
+    # base-common에서 허용 목록만 복사
+    $baseCommonTemp = Join-Path $env:TEMP "wiw-base-common-filtered"
+    if (Test-Path $baseCommonTemp) { Remove-Item $baseCommonTemp -Recurse -Force }
+    New-Item -ItemType Directory -Path $baseCommonTemp -Force | Out-Null
+    foreach ($f in $nonDevBaseRulesAllow) {
+        $src = Join-Path "$WiwRoot\base\rules\common" $f
+        if (Test-Path $src) { Copy-Item $src $baseCommonTemp }
+    }
+
     $rulesSources = @(
-        @{ Name = "base-common";    Path = "$WiwRoot\base\rules\common" },
+        @{ Name = "base-common";    Path = $baseCommonTemp },
         @{ Name = "wiw-common";     Path = "$WiwRoot\common\rules" },
         @{ Name = "wiw-$Stack";     Path = "$WiwRoot\$Stack\rules" }
     )
@@ -186,12 +198,22 @@ if ($IsDevStack) {
             "$WiwRoot\$Stack\skills"
         ) -CountDirs
 } else {
-    # Non-dev: base의 공통 스킬 + profile 스킬
+    # Non-dev: base 스킬 중 개발 무관한 것만 + profile 스킬
+    $nonDevBaseSkillsAllow = @("strategic-compact", "iterative-retrieval", "search-first")
+
+    $baseSkillsTemp = Join-Path $env:TEMP "wiw-base-skills-filtered"
+    if (Test-Path $baseSkillsTemp) { Remove-Item $baseSkillsTemp -Recurse -Force }
+    New-Item -ItemType Directory -Path $baseSkillsTemp -Force | Out-Null
+    foreach ($s in $nonDevBaseSkillsAllow) {
+        $src = Join-Path "$WiwRoot\base\skills" $s
+        if (Test-Path $src) { Copy-Item $src $baseSkillsTemp -Recurse }
+    }
+
     Copy-LayerDir `
         -TargetDir (Join-Path $claudeDir "skills") `
         -Label "skills/" `
         -Sources @(
-            "$WiwRoot\base\skills",
+            $baseSkillsTemp,
             "$WiwRoot\$Stack\skills"
         ) -CountDirs
 }
