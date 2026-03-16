@@ -59,6 +59,9 @@
       "Bash(git push origin --delete master:*)"
     ]
   },
+  "enabledPlugins": {
+    "typescript-lsp@official": true
+  },
   "hooks": {
     "PreToolUse": [
       {
