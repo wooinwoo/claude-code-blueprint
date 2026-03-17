@@ -36,7 +36,32 @@ state 파일에 `"mode"` 저장 → 세션 복구 시 모드 자동 유지.
 | `/orchestrate 문의 기능` | 새 파이프라인 시작 → `.orchestrate/{slug}.json` 생성 |
 | `/orchestrate` + state 1개 | 그 파이프라인 이어감 |
 | `/orchestrate` + state 여러개 | 현재 브랜치(`git branch --show-current`)로 매칭. 못 찾으면 목록 → AskUserQuestion |
-| `/orchestrate` + state 0개 | "진행 중인 파이프라인 없음. 인자를 지정하세요." |
+| `/orchestrate` + state 0개 | 아래 **신규 파이프라인 가이드** 실행 |
+
+### 신규 파이프라인 가이드 (인수 없이 진입 시)
+
+인수 없이 `/orchestrate`를 실행했고 진행 중인 파이프라인이 없으면, 순서대로 질문합니다:
+
+```typescript
+// Step 1: 뭘 만들지
+AskUserQuestion([{
+  question: "어떤 기능을 만들까요?",
+  header: "기능 설명",
+  description: "자연어로 설명하거나, Jira 이슈 키(예: PROJ-123)를 입력하세요."
+}])
+
+// Step 2: 모드 선택
+AskUserQuestion([{
+  question: "어떤 모드로 진행할까요?",
+  header: "파이프라인 모드",
+  options: [
+    { label: "Standard", description: "빠른 반복. 에이전트 4-7개, 리뷰 1라운드" },
+    { label: "Full", description: "최대 품질. 코드베이스 스캔 + architect 설계 + TDD + 리뷰 2라운드 (에이전트 10-12개)" }
+  ]
+}])
+```
+
+이후 선택된 모드에 따라 Phase 0(Full) 또는 Phase 1(Standard)부터 시작합니다.
 
 ### Phase 감지
 
