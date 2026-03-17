@@ -706,6 +706,50 @@ jq '.phase = "done"' .orchestrate/{slug}.json > .orchestrate/{slug}.json.tmp && 
 
 검증 후 PR을 생성합니다.
 
+### 4-0. Lighthouse 성능/접근성 체크
+
+> dev 서버가 실행 중인 경우에만 진행합니다. 없으면 스킵합니다.
+
+```typescript
+// dev 서버 실행 여부 확인
+const devServer = Bash("curl -s -o /dev/null -w '%{http_code}' http://localhost:3000 || curl -s -o /dev/null -w '%{http_code}' http://localhost:5173")
+
+if (devServer === "200") {
+  const url = "http://localhost:3000"  // 또는 5173
+
+  // Lighthouse CLI 실행
+  try {
+    const lh = Bash(`npx lighthouse ${url} --output=json --output-path=./lighthouse-report.json --chrome-flags='--headless --no-sandbox' --only-categories=performance,accessibility,best-practices`)
+
+    const report = Read("./lighthouse-report.json")
+    const scores = {
+      performance: Math.round(report.categories.performance.score * 100),
+      accessibility: Math.round(report.categories.accessibility.score * 100),
+      bestPractices: Math.round(report.categories['best-practices'].score * 100)
+    }
+
+    console.log(`
+    ⚡ Lighthouse 결과
+    Performance:    ${scores.performance}/100 ${scores.performance < 50 ? '❌' : scores.performance < 80 ? '⚠️' : '✅'}
+    Accessibility:  ${scores.accessibility}/100 ${scores.accessibility < 80 ? '❌' : '✅'}
+    Best Practices: ${scores.bestPractices}/100 ${scores.bestPractices < 80 ? '⚠️' : '✅'}
+    `)
+
+    // Performance 50 미만 또는 Accessibility 80 미만이면 경고
+    if (scores.performance < 50 || scores.accessibility < 80) {
+      console.log("⚠️ 성능/접근성 점수가 낮습니다. PR 전에 개선을 권장합니다.")
+      // 차단하지는 않음 — 경고만
+    }
+
+    Bash("rm -f ./lighthouse-report.json")
+  } catch (error) {
+    console.log("⚠️ Lighthouse 실행 실패 (Chrome 미설치?). 스킵합니다.")
+  }
+} else {
+  console.log("ℹ️ dev 서버 미실행 — Lighthouse 체크 스킵")
+}
+```
+
 ### 4-1. 최종 검증
 
 ```bash
