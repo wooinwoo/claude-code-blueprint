@@ -117,7 +117,7 @@ if ($IsDevStack) {
     $nonDevBaseRulesAllow = @("git-workflow.md", "agents.md")
 
     # base-common에서 허용 목록만 복사
-    $baseCommonTemp = Join-Path $env:TEMP "ccb-base-common-filtered"
+    $baseCommonTemp = Join-Path $env:TEMP "ccb-base-common-filtered-$(Get-Random)"
     if (Test-Path $baseCommonTemp) { Remove-Item $baseCommonTemp -Recurse -Force }
     New-Item -ItemType Directory -Path $baseCommonTemp -Force | Out-Null
     foreach ($f in $nonDevBaseRulesAllow) {
@@ -176,11 +176,22 @@ if ($IsDevStack) {
             "$CcbRoot\$Stack\commands"
         ) -Recurse
 } else {
-    # Non-dev: common의 일부 유틸 커맨드 + profile 커맨드
+    # Non-dev: common 유틸 커맨드(개발 무관) + profile 커맨드
+    $nonDevCommonCmdsAllow = @("commit.md", "jira.md", "guide.md")
+
+    $commonCmdsTemp = Join-Path $env:TEMP "ccb-common-cmds-filtered-$(Get-Random)"
+    if (Test-Path $commonCmdsTemp) { Remove-Item $commonCmdsTemp -Recurse -Force }
+    New-Item -ItemType Directory -Path $commonCmdsTemp -Force | Out-Null
+    foreach ($c in $nonDevCommonCmdsAllow) {
+        $src = Join-Path "$CcbRoot\common\commands" $c
+        if (Test-Path $src) { Copy-Item $src $commonCmdsTemp }
+    }
+
     Copy-LayerDir `
         -TargetDir (Join-Path $claudeDir "commands") `
         -Label "commands/" `
         -Sources @(
+            $commonCmdsTemp,
             "$CcbRoot\$Stack\commands"
         ) -Recurse
 }
@@ -201,7 +212,7 @@ if ($IsDevStack) {
     # Non-dev: base 스킬 중 개발 무관한 것만 + profile 스킬
     $nonDevBaseSkillsAllow = @("strategic-compact", "iterative-retrieval", "search-first")
 
-    $baseSkillsTemp = Join-Path $env:TEMP "ccb-base-skills-filtered"
+    $baseSkillsTemp = Join-Path $env:TEMP "ccb-base-skills-filtered-$(Get-Random)"
     if (Test-Path $baseSkillsTemp) { Remove-Item $baseSkillsTemp -Recurse -Force }
     New-Item -ItemType Directory -Path $baseSkillsTemp -Force | Out-Null
     foreach ($s in $nonDevBaseSkillsAllow) {

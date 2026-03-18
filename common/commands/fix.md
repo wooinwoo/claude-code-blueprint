@@ -302,7 +302,7 @@ if (jira_key) {
 ### 금지사항
 - ❌ `git add -A` / `git add .` 사용 금지
 - ❌ 비밀 파일 커밋 금지 (.env, credentials)
-- ❌ `Co-Authored-By` 추가 금지
+- ❌ `Co-Authored-By` 자동 추가 금지 (사용자가 명시적으로 요청한 경우만 허용)
 
 ### 권장사항
 - ✅ 간단한 수정만 (1-3 파일)
