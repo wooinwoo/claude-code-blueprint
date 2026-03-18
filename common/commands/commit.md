@@ -97,4 +97,4 @@ git commit -m "fix(auth): reject JWT tokens for deleted or deactivated users"
 
 - `git add -A` / `git add .` 사용 금지
 - 비밀 파일 커밋 금지
-- `Co-Authored-By` 자동 추가 금지 (사용자가 명시적으로 요청한 경우만 허용)
+- `Co-Authored-By` 추가 금지
