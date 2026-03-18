@@ -9,7 +9,6 @@ tools:
   - Bash
   - Grep
   - Glob
-model: opus
 ---
 
 # Next.js/Vite Build Error Resolver
