@@ -87,8 +87,17 @@ for (const item of knipResults) {
 }
 ```
 
-> knip에 NestJS 플러그인이 있지만 데코레이터 기반 DI를 완벽히 추적하지 않습니다.
-> 위 필터로 오탐을 줄이되, `@Module()`의 `providers` 배열을 직접 확인하는 게 가장 정확합니다.
+> **검증 근거**: knip NestJS 플러그인 소스코드 확인 결과 (`packages/knip/src/plugins/nest/index.ts`),
+> `nest-cli.json` 설정 파일만 읽고 **데코레이터를 전혀 추적하지 않습니다.**
+> 즉 `@Injectable()` 서비스가 `@Module({ providers: [MyService] })`에 등록되어 있어도
+> knip은 직접 import가 없으면 "미사용"으로 보고합니다.
+>
+> knip 공식 권장 대안:
+> 1. `knip.json`의 `entry` 패턴에 NestJS 파일 추가 (`"src/**/*.module.ts"`)
+> 2. 개별 export에 JSDoc `@public` 태그 추가
+> 3. `ignore` 패턴으로 제외 (최후 수단)
+>
+> 위 데코레이터 필터는 **이 커맨드 내에서 자동 처리**하므로 별도 설정 없이 동작합니다.
 
 ---
 
