@@ -55,6 +55,43 @@ pnpm dlx ts-prune | grep "used in 0 modules"
 
 ---
 
+### 1-4. NestJS 오탐 필터 (NestJS 프로젝트일 때)
+
+NestJS는 데코레이터 기반 DI를 사용하므로 knip이 오탐할 수 있습니다. 다음 패턴은 **SKIP으로 강제 분류**합니다:
+
+```typescript
+// 자동 SKIP 대상 — knip이 "미사용"으로 잡아도 실제로는 DI로 사용 중
+const nestjsSkipPatterns = [
+  // 데코레이터가 있는 클래스는 NestJS DI 컨테이너가 관리
+  /@Injectable\(\)/,     // 서비스, 가드, 인터셉터, 파이프
+  /@Controller\(\)/,     // 컨트롤러
+  /@Module\(\)/,         // 모듈 (imports/providers/exports로 연결)
+  /@Resolver\(\)/,       // GraphQL 리졸버
+
+  // 모듈의 providers/imports에 등록된 클래스
+  // → Module 파일을 Read해서 providers 배열 안의 클래스명 추출
+  // → 해당 클래스는 SKIP
+
+  // Entity/DTO는 TypeORM/Prisma가 참조
+  /@Entity\(\)/,
+  /@Schema\(\)/,         // Mongoose
+]
+
+// knip 결과에서 위 패턴이 있는 파일은 제거 대상에서 제외
+for (const item of knipResults) {
+  const content = Read(item.filePath)
+  if (nestjsSkipPatterns.some(p => p.test(content))) {
+    item.grade = "SKIP"
+    item.reason = "NestJS DI 데코레이터 — 직접 import 없어도 사용 중"
+  }
+}
+```
+
+> knip에 NestJS 플러그인이 있지만 데코레이터 기반 DI를 완벽히 추적하지 않습니다.
+> 위 필터로 오탐을 줄이되, `@Module()`의 `providers` 배열을 직접 확인하는 게 가장 정확합니다.
+
+---
+
 ## Phase 2: 리포트
 
 ```
@@ -109,6 +146,7 @@ Safe to remove: 10/12 (2 items need manual review)
 - `src/app/routes/**` (라우트 entry point)
 - `package.json` scripts에서 참조되는 패키지
 - `peerDependencies`
+- NestJS: `@Injectable`, `@Controller`, `@Module`, `@Resolver`, `@Entity`, `@Schema` 데코레이터가 있는 파일
 
 ---
 
