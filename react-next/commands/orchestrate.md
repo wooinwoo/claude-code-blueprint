@@ -554,16 +554,15 @@ Glob("**/*.module.scss")
 `detected.testRunner` 결과에 따라:
 
 **testRunner == null (테스트 인프라 없음):**
-1. `${pm} add -D vitest @testing-library/react @testing-library/jest-dom jsdom`
-2. `vitest.config.ts` 생성 (jsdom env, `src/**/*.test.{ts,tsx}` 패턴)
-3. `src/test/setup.ts` 생성
-4. package.json에 `"test": "vitest run"` 스크립트 추가
-5. `git commit -m "chore: add test infrastructure"`
+- "⚠️ 테스트 인프라 없음. 이번 구현은 테스트 없이 진행합니다."
+- "테스트 셋업은 `/test-setup` 커맨드로 별도 진행하세요."
+- 테스트 관련 Step 스킵 (구현만 진행)
 
 **testRunner != null (테스트 인프라 있음):**
 1. 테스트 설정 파일 읽기 (패턴, 환경, 셋업 파일, alias)
 2. 기존 테스트 파일 1-2개 읽기 → import 스타일, mock 패턴, 구조 파악
 3. `detected.testConventions`에 저장 → 테스트 작성 시 참조
+4. 현재 커버리지 확인 (가능하면): 낮으면 "ℹ️ 현재 테스트 커버리지 {n}%. `/test-coverage fill`로 보강 권장" 출력
 
 ### 3-1. 작업 디렉토리 확인
 
@@ -614,11 +613,14 @@ Standard 모드에서도 각 구현 그룹 완료 후 해당 코드의 테스트
 3. ${pm} test 실행 → 실패하면 수정
 4. 통과하면 다음 그룹으로
 
-테스트가 없는 코드는 커밋하지 않는다.
+테스트 인프라가 없으면 (detected.testRunner == null) 이 규칙은 스킵.
 
-### 테스트 존재 게이트 (커밋 전)
+### 테스트 존재 게이트 (커밋 전, testRunner 있을 때만)
+
+> testRunner 없으면 이 게이트 스킵. 테스트 인프라가 없으면 (detected.testRunner == null) 이 규칙은 스킵.
 
 ```bash
+if [ -n "$detected_testRunner" ]; then
 new_files=$(git diff --name-only --diff-filter=A -- '*.ts' '*.tsx' | grep -v '.test.' | grep -v '.spec.' | grep -v '.d.ts')
 for file in $new_files; do
   test_file="${file%.ts}.test.ts"
@@ -626,9 +628,10 @@ for file in $new_files; do
     echo "❌ 테스트 없음: $file → $test_file 작성 필요"
   fi
 done
+fi
 ```
 
-모든 신규 소스 파일에 대응 테스트가 있어야 커밋 진행.
+모든 신규 소스 파일에 대응 테스트가 있어야 커밋 진행. (testRunner 있을 때만)
 
 #### [Full] Full 모드 — TDD (테스트 먼저) + Incremental Commit
 
