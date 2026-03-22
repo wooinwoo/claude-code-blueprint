@@ -303,12 +303,60 @@ fi
 
 > **스코프 분기**: 구현 순서가 달라짐
 
+### Step 0 (자동): 프로젝트 패턴 탐지
+
+코드를 쓰기 전에 프로젝트 구조를 파악합니다. **Standard 모드에서도 반드시 실행.**
+
+```bash
+# 1. ORM 감지
+Grep("typeorm|@prisma/client|drizzle-orm", path="package.json")
+# → TypeORM이면 Entity 패턴, Prisma면 schema.prisma 패턴, Drizzle이면 schema.ts 패턴
+
+# 2. 기존 모듈/컴포넌트 구조 파악
+Glob("**/src/**/*.module.ts")      # NestJS 모듈 위치
+Glob("**/src/components/**/*.tsx") # React 컴포넌트 위치
+Glob("**/src/routes/**/*.tsx")     # 라우트 위치
+
+# 3. 테스트 프레임워크 감지
+Grep("vitest|jest|@testing-library", path="package.json")
+
+# 4. 공유 타입 패키지 존재 여부
+Glob("packages/shared/**/*")
+Glob("libs/types/**/*")
+
+# 5. 데이터 페칭 라이브러리 감지
+Grep("@tanstack/react-query|swr|axios|ky", path="package.json")
+```
+
+결과를 state 파일의 `"detected"` 필드에 저장:
+```json
+{
+  "detected": {
+    "orm": "prisma",
+    "testRunner": "vitest",
+    "dataFetching": "@tanstack/react-query",
+    "sharedTypesPath": "packages/shared/src",
+    "backendModulePath": "apps/api/src",
+    "frontendComponentPath": "apps/web/src/components"
+  }
+}
+```
+
+### 공유 타입 위치 규칙
+
+| 프로젝트 구조 | 공유 타입 위치 |
+|--------------|--------------|
+| 모노레포 + `packages/shared/` 존재 | 거기에 추가 |
+| 모노레포 + 없음 | `packages/shared/` 생성 + workspace 등록 |
+| 단일 레포 + `src/types/` 존재 | 거기에 추가 |
+| 단일 레포 + 없음 | `src/types/` 생성 |
+
 ### Fullstack — 백엔드 먼저, 프론트 나중
 
 API가 먼저 있어야 프론트에서 연동할 수 있음. Mock 대신 실제 API 사용.
 
 ```
-Step 1: 공유 타입 정의 (API Contract의 TypeScript 타입)
+Step 1: 공유 타입 정의 (위에서 탐지된 경로에 생성)
         ↓
 Step 2: 백엔드 구현
         - Entity/DTO 생성
@@ -320,7 +368,7 @@ Step 3: 백엔드 검증 루프 (lint → type → build → test, 최대 3회)
         ↓
 Step 4: 프론트엔드 구현
         - API 서비스 (실제 백엔드 연동)
-        - Custom hooks (TanStack Query)
+        - Custom hooks (Step 0에서 감지된 데이터 페칭 라이브러리 사용)
         - UI 컴포넌트
         - 페이지 조립
         ↓
@@ -351,6 +399,13 @@ if script_exists "test"; then ${pm} test; fi
 스크립트가 하나도 없으면 "⚠️ 검증 스크립트 없음 — 타입체크만 시도" 후 `npx tsc --noEmit`만 실행.
 실패 시 에러 분석 → 수정 → 재검증. 최대 3회.
 
+**3회 실패 시**: 에러 내용을 사용자에게 보여주고 선택 요청:
+1. 계속 시도 (추가 3회)
+2. 이 Step 스킵하고 다음 진행
+3. 파이프라인 중단
+
+**모노레포 스크립트 실행**: 모노레포 감지 시 `${pm} --filter {package-name} {script}` 또는 해당 패키지 디렉토리에서 직접 실행.
+
 ### [Full] TDD 모드
 
 각 구현 그룹마다 테스트 먼저 (RED) → 구현 (GREEN) → 리팩토링 → 커밋.
@@ -378,6 +433,24 @@ if (scope !== "backend") {
 
 > **스코프 분기**: 투입 에이전트가 달라짐
 > **모드 분기**: Standard는 1라운드, **Full은 2라운드** (1라운드 피드백 반영 후 재리뷰)
+
+#### 에이전트 호출 방법
+
+각 에이전트는 `.claude/agents/{agent-name}.md` 파일에 정의되어 있습니다.
+
+```typescript
+// 에이전트별로 독립 서브에이전트 실행:
+const diff = Bash("git diff main...HEAD")
+
+// 방법 1: Agent 도구로 서브에이전트 위임
+Agent("code-reviewer", `다음 diff를 리뷰해주세요:\n${diff}`)
+Agent("security-reviewer", `다음 diff를 보안 관점에서 리뷰해주세요:\n${diff}`)
+
+// 방법 2: 수동 실행 (Agent 도구 없을 때)
+// .claude/agents/code-reviewer.md를 Read → 지시에 따라 리뷰 수행
+```
+
+각 에이전트의 출력을 수집하여 통합 리포트로 합칩니다.
 
 #### Fullstack — 프론트 + 백엔드 리뷰어 전부 투입
 
