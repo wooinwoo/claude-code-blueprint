@@ -6,12 +6,13 @@
     base/ + common/ + [stack]/ 을 프로젝트의 .claude/ 하위에 파일 복사로 설치합니다.
     모든 항목은 파일 복사이므로, 업데이트 시 setup.ps1 재실행이 필요합니다.
 
-    Dev stacks: react-next, nestjs, java-web (base + common + stack 레이어)
+    Dev stacks: react-next, nestjs, fullstack, java-web (base + common + stack 레이어)
     Non-dev profiles: designer, planner (stack 레이어만, base 선택적)
 
 .EXAMPLE
     .\setup.ps1 react-next C:\my-react-project
     .\setup.ps1 nestjs C:\my-nestjs-project
+    .\setup.ps1 fullstack C:\my-fullstack-project
     .\setup.ps1 java-web C:\my-java-project
     .\setup.ps1 designer C:\my-design-project
     .\setup.ps1 planner C:\my-planning-project
