@@ -51,14 +51,18 @@ AskUserQuestion([{
 ### 1-1. Vitest 커버리지 실행
 
 ```bash
-pnpm vitest run --coverage --reporter=json --outputFile=coverage-report.json
+# 감지된 패키지 매니저 사용
+${pm} vitest run --coverage --coverage.reporter=json --coverage.reportsDirectory=./coverage
+# 커버리지 결과: coverage/coverage-summary.json
 ```
 
-> `vitest.config` 에 `coverage.provider` 미설정 시:
+> `vitest.config`에 `coverage.provider` 미설정 시:
 > ```bash
-> pnpm dlx @vitest/coverage-v8
-> pnpm vitest run --coverage
+> ${pm} dlx @vitest/coverage-v8
+> ${pm} vitest run --coverage
 > ```
+
+> **테스트 파일이 0개인 경우**: 커버리지 0%로 표시하고 Phase 2로 즉시 진행 (전체 소스가 미커버 대상).
 
 ### 1-2. 커버리지 파싱
 
@@ -118,6 +122,8 @@ AskUserQuestion([{
 }])
 ```
 
+"아니요" 선택 시: "리포트 출력 완료. 나중에 `/test-coverage fill`로 테스트를 생성할 수 있습니다." 출력 후 종료.
+
 `fill` 플래그로 실행했으면 이 질문 스킵 → 전체 생성으로 바로 진행.
 
 ### 3-1. 테스트 생성 우선순위
@@ -132,10 +138,11 @@ Priority:
 
 ### 3-2. 테스트 생성 규칙
 
+- **기존 프로젝트 패턴 따르기**: 기존 테스트 파일 1-2개 읽고 import 스타일, mock 패턴, 파일 위치 파악
 - 기존 테스트 파일이 있으면 **기존 파일에 추가**
-- 없으면 동일 디렉토리에 `*.test.ts(x)` 생성
+- 없으면 기존 프로젝트 패턴에 따라 생성 (co-located `*.test.ts` 또는 `__tests__/` 디렉토리)
 - Arrange-Act-Assert 패턴
-- 테스트명: 한국어 허용 (`it('억 단위 미만 금액을 만원 단위로 포맷한다')`)
+- 테스트명: 기존 프로젝트 언어 따르기 (영어 또는 한국어)
 - mock은 최소한으로, 실제 로직 테스트 우선
 
 ### 3-3. 생성 후 검증
