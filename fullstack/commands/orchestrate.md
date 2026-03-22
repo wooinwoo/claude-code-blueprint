@@ -257,6 +257,12 @@ interface PaginatedResponse<T> {
 
 승인 후 **멈추지 않고 Phase 2→3→4 연속 실행**.
 
+플랜 저장 전 디렉토리 확인:
+```bash
+mkdir -p plans
+mkdir -p .orchestrate
+```
+
 ---
 
 ## Phase 2: Branch
@@ -266,10 +272,23 @@ git worktree add .worktrees/{slug} -b feature/{slug}
 cd .worktrees/{slug}
 
 # 패키지 매니저 자동 감지 (lock 파일 기준)
-# pnpm-lock.yaml → pnpm install
-# package-lock.json → npm install
-# yarn.lock → yarn install
-# bun.lockb → bun install
+if [ -f pnpm-lock.yaml ]; then pnpm install
+elif [ -f package-lock.json ]; then npm install
+elif [ -f yarn.lock ]; then yarn install
+elif [ -f bun.lockb ]; then bun install
+elif [ -f package.json ]; then npm install  # lock 없으면 npm 기본
+else echo "⚠️ package.json 없음 — install 스킵"
+fi
+```
+
+### git remote 확인
+
+```bash
+# PR 생성을 위해 remote 필요. 없으면 Phase 4에서 PR 스킵
+remote_exists=$(git remote -v | head -1)
+if [ -z "$remote_exists" ]; then
+  echo "⚠️ git remote 없음. Phase 4에서 PR 생성을 스킵하고 로컬 커밋만 진행합니다."
+fi
 ```
 
 ---
@@ -302,8 +321,10 @@ Step 4: 프론트엔드 구현
 Step 5: 프론트엔드 검증 루프 (lint → type → build → test, 최대 3회)
         ↓
 Step 6: 통합 확인
-        - 프론트에서 백엔드 API 호출 정상 동작 확인
-        - 에러 케이스 (401, 404, 500) 핸들링 확인
+        - 공유 타입 일치: 프론트 API 서비스와 백엔드 DTO 간 타입 불일치 없는지 tsc 확인
+        - 백엔드 E2E 테스트 실행 (있으면)
+        - 프론트 빌드 성공 확인 (백엔드 연동 코드 포함)
+        - 에러 핸들링 코드 존재 확인: Grep으로 API 서비스에서 401/404/500 처리 여부
 ```
 
 ### Frontend / Backend 단독
@@ -313,12 +334,15 @@ Step 6: 통합 확인
 ### 검증 루프 (공통)
 
 ```bash
-pnpm lint --fix
-pnpm tsc --noEmit
-pnpm build
-pnpm test
+# package.json scripts 확인 후 있는 것만 실행
+# 감지된 패키지 매니저 사용 (Phase 2에서 저장)
+if script_exists "lint"; then ${pm} lint --fix; fi
+if script_exists "tsc" || has_tsconfig; then ${pm} tsc --noEmit; fi
+if script_exists "build"; then ${pm} build; fi
+if script_exists "test"; then ${pm} test; fi
 ```
 
+스크립트가 하나도 없으면 "⚠️ 검증 스크립트 없음 — 타입체크만 시도" 후 `npx tsc --noEmit`만 실행.
 실패 시 에러 분석 → 수정 → 재검증. 최대 3회.
 
 ### [Full] TDD 모드
@@ -370,17 +394,23 @@ if (scope !== "backend") {
 ```bash
 git add {specific files}
 git commit -m "{type}({scope}): {description}"
-git push -u origin {branch}
-gh pr create --title "{type}({scope}): {description}" --body "..."
+
+# remote 있으면 push + PR
+if git remote -v | grep -q origin; then
+  git push -u origin {branch}
+  gh pr create --title "{type}({scope}): {description}" --body "..."
+else
+  echo "⚠️ git remote 없음. 로컬 커밋만 완료. push/PR은 remote 설정 후 수동으로."
+fi
 ```
 
-PR 본문:
+PR 본문 (PR 생성 시):
 - 변경 요약 (프론트/백 구분)
 - API Contract 변경 사항
 - 테스트 결과
 - Lighthouse 점수 (해당 시)
 
-**여기서 정지. 리뷰 대기.**
+**여기서 정지. 리뷰 대기. (remote 없으면 로컬 커밋 상태로 종료)**
 
 ---
 
