@@ -174,7 +174,7 @@ prompt: "프로젝트 {project_path}에서 '{feature_description}'과 유사한 
 // 사용자가 한 번만 승인하면 이후 자동 진행
 allowedPrompts: [
   { tool: "Bash", prompt: "git operations (add, commit, push, checkout, branch, worktree)" },
-  { tool: "Bash", prompt: "build and validation (pnpm install, lint, build, test)" },
+  { tool: "Bash", prompt: "build and validation (install, lint, build, test)" },
   { tool: "Bash", prompt: "GitHub CLI operations (gh pr create, view)" },
   { tool: "Bash", prompt: "file operations (cp, mv, rm, mkdir)" }
 ]
@@ -426,6 +426,7 @@ jira_key="PROJ-123"  # 또는 standalone이면 "null"
 identifier="${jira_key}-${slug}"  # 또는 standalone이면 "${slug}"
 mode="standard"  # 또는 "full" (--full 플래그 사용 시)
 
+mkdir -p plans
 mkdir -p .orchestrate
 cat > ".orchestrate/${slug}.json" <<EOF
 {
@@ -470,7 +471,24 @@ if [ -f ../.env ]; then
   cp ../.env .env
 fi
 
-pnpm install
+# 패키지 매니저 자동 감지 (lock 파일 기준)
+if [ -f pnpm-lock.yaml ]; then pnpm install
+elif [ -f package-lock.json ]; then npm install
+elif [ -f yarn.lock ]; then yarn install
+elif [ -f bun.lockb ]; then bun install
+elif [ -f package.json ]; then npm install  # lock 없으면 npm 기본
+else echo "⚠️ package.json 없음 — install 스킵"
+fi
+```
+
+### git remote 확인
+
+```bash
+# PR 생성을 위해 remote 필요. 없으면 Phase 4에서 PR 스킵
+remote_exists=$(git remote -v | head -1)
+if [ -z "$remote_exists" ]; then
+  echo "⚠️ git remote 없음. Phase 4에서 PR 생성을 스킵하고 로컬 커밋만 진행합니다."
+fi
 ```
 
 ### 2-3. 플랜 파일 복사
@@ -548,12 +566,12 @@ Group N의 각 Task에 대해:
 1. 테스트 먼저 작성
    - Architect의 TDD Anchor를 기반으로 테스트 파일 작성
    - 성공 케이스 + 에러 케이스 + 엣지 케이스 (빈 배열, null, 경계값)
-   - pnpm test --testPathPattern='{test file}' → RED 확인 (테스트 실패 = 정상)
+   - ${pm} test --testPathPattern='{test file}' → RED 확인 (테스트 실패 = 정상)
 
 2. 최소 구현
    - 인터페이스 계약(3-1a에서 생성한 타입)을 import하여 사용
    - Phase 0 스캔에서 파악한 기존 패턴을 따라 구현
-   - pnpm test --testPathPattern='{test file}' → GREEN 확인
+   - ${pm} test --testPathPattern='{test file}' → GREEN 확인
 
 3. 리팩토링
    - 중복 제거, 네이밍 개선, 불필요한 코드 정리
@@ -579,22 +597,26 @@ cd .worktrees/{slug}
 
 #### Standard 모드 — 검증 루프 (최대 3회)
 
-```
+```bash
+# package.json scripts 확인 후 있는 것만 실행
+# 감지된 패키지 매니저 사용 (Phase 2에서 저장)
 attempt = 0
 
 while attempt < 3:
   attempt++
 
-  1. pnpm lint --fix
+  1. if script_exists "lint"; then ${pm} lint --fix; fi
      → 실패 시: 에러 수정 → 처음부터 재시작 (continue)
 
-  2. pnpm build
+  2. if script_exists "build"; then ${pm} build; fi
      → 실패 시: 에러 수정 → 처음부터 재시작 (continue)
 
-  3. pnpm test
+  3. if script_exists "test"; then ${pm} test; fi
      → 실패 시: 에러 수정 → 처음부터 재시작 (continue)
 
   4. 모두 성공 → 루프 종료 (break)
+
+스크립트가 하나도 없으면 "⚠️ 검증 스크립트 없음 — 타입체크만 시도" 후 `npx tsc --noEmit`만 실행.
 
 if attempt == 3:
   에러 로그 출력
@@ -605,25 +627,26 @@ if attempt == 3:
 #### [Full] Full 모드 — 강화된 검증 루프 (최대 3회)
 
 ```
+# package.json scripts 확인 후 있는 것만 실행
 attempt = 0
 prev_errors = []
 
 while attempt < 3:
   attempt++
 
-  1. pnpm lint --fix
+  1. if script_exists "lint"; then ${pm} lint --fix; fi
      → 실패 시: 에러 수정 → 처음부터 재시작 (continue)
 
-  2. pnpm tsc --noEmit
+  2. if script_exists "tsc" || has_tsconfig; then ${pm} tsc --noEmit; fi
      → 실패 시: 에러 수정 → 처음부터 재시작 (continue)
 
-  3. pnpm build
+  3. if script_exists "build"; then ${pm} build; fi
      → 실패 시: 에러 수정 → 처음부터 재시작 (continue)
 
-  4. pnpm test --testPathPattern='{feature 관련}'
+  4. if script_exists "test"; then ${pm} test --testPathPattern='{feature 관련}'; fi
      → 실패 시: 에러 수정 → 처음부터 재시작 (continue)
 
-  5. pnpm test (전체)
+  5. if script_exists "test"; then ${pm} test (전체); fi
      → 실패 시: 기존 테스트 깨짐 확인 → 수정 → 처음부터 재시작 (continue)
 
   6. 모두 성공 → 루프 종료 (break)
@@ -682,7 +705,7 @@ Mode: {standard|full}
 
 ## 복구 명령어
 cd {worktree_path}
-pnpm build  # 수동 확인 후 에러 수정
+${pm} build  # 수동 확인 후 에러 수정
 # 수정 완료 후:
 /orchestrate  # Phase 3부터 재개
 ```
@@ -917,9 +940,11 @@ git commit -m "{type}({scope}): {description}"
 ### 4-4. PR 생성
 
 ```bash
-git push -u origin {branch}
+# remote 있으면 push + PR
+if git remote -v | grep -q origin; then
+  git push -u origin {branch}
 
-gh pr create --title "{type}({scope}): {description}" --body "$(cat <<'EOF'
+  gh pr create --title "{type}({scope}): {description}" --body "$(cat <<'EOF'
 <!-- 작성 규칙:
 - 모든 {placeholder}를 실제 값으로 치환
 - 해당 없는 선택 섹션은 제거 (빈 섹션 남기지 말 것)
@@ -962,9 +987,9 @@ gh pr create --title "{type}({scope}): {description}" --body "$(cat <<'EOF'
 | {Round 1 최다 이슈 에이전트} | {PASS/이슈 N건} | 이슈가 실제로 해결됐는지 |
 
 ## 테스트
-- [x] `pnpm lint` 통과
-- [x] `pnpm build` 통과
-- [x] `pnpm test` 통과
+- [x] lint 통과
+- [x] build 통과
+- [x] test 통과
 
 ### 수동 테스트 체크리스트
 - [ ] 데스크톱 (Chrome)
@@ -975,7 +1000,12 @@ gh pr create --title "{type}({scope}): {description}" --body "$(cat <<'EOF'
 - {리뷰어가 알아야 할 컨텍스트, 트레이드오프, 후속 작업}
 EOF
 )"
+else
+  echo "⚠️ git remote 없음. 로컬 커밋만 완료. push/PR은 remote 설정 후 수동으로."
+fi
 ```
+
+**여기서 정지. 리뷰 대기. (remote 없으면 로컬 커밋 상태로 종료)**
 
 ### 4-5. Jira 상태 변경 (Jira 모드)
 
@@ -1051,7 +1081,7 @@ cd .worktrees/{slug}
 
 #### Standard 모드
 ```bash
-pnpm lint --fix && pnpm build && pnpm test
+${pm} lint --fix && ${pm} build && ${pm} test
 git add {modified files}
 git commit -m "fix({scope}): address review feedback"
 git push
@@ -1059,7 +1089,7 @@ git push
 
 #### Full 모드
 ```bash
-pnpm lint --fix && pnpm tsc --noEmit && pnpm build && pnpm test --testPathPattern='{feature 관련}' && pnpm test
+${pm} lint --fix && ${pm} tsc --noEmit && ${pm} build && ${pm} test --testPathPattern='{feature 관련}' && ${pm} test
 git add {modified files}
 git commit -m "fix({scope}): address review feedback"
 git push
@@ -1178,7 +1208,7 @@ mcp__jira__jira_transition_issue({ issue_key: "{JIRA-KEY}", transition: "Done" }
 
 ### Phase 3: 빌드 실패
 
-**증상**: `pnpm build` 실패, worktree에 갇힘
+**증상**: 빌드 실패, worktree에 갇힘
 
 **복구**:
 ```bash
@@ -1186,8 +1216,8 @@ mcp__jira__jira_transition_issue({ issue_key: "{JIRA-KEY}", transition: "Done" }
 cd .worktrees/{slug}
 
 # 2. 에러 수정 후 다시 빌드
-pnpm lint --fix
-pnpm build
+${pm} lint --fix
+${pm} build
 
 # 3. 성공하면 /orchestrate 재실행
 ```

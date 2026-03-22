@@ -155,6 +155,10 @@ prompt: "프로젝트 {project_path}에서 '{feature_description}'과 유사한 
 
 ### 0-2. 스캔 결과 저장
 
+```bash
+mkdir -p plans
+```
+
 스캔 결과를 `plans/{slug}-scan.md`에 저장합니다. Phase 1, 3에서 참조합니다.
 
 **멈추지 않고 바로 Phase 1을 실행합니다.**
@@ -174,7 +178,7 @@ prompt: "프로젝트 {project_path}에서 '{feature_description}'과 유사한 
 // 사용자가 한 번만 승인하면 이후 자동 진행
 allowedPrompts: [
   { tool: "Bash", prompt: "git operations (add, commit, push, checkout, branch, worktree)" },
-  { tool: "Bash", prompt: "build and validation (pnpm install, biome check, build, test)" },
+  { tool: "Bash", prompt: "build and validation (install, biome check, build, test)" },
   { tool: "Bash", prompt: "GitHub CLI operations (gh pr create, view)" },
   { tool: "Bash", prompt: "file operations (cp, mv, rm, mkdir)" }
 ]
@@ -553,6 +557,13 @@ git worktree add .worktrees/{slug} -b {branch-name}
 ```bash
 cd .worktrees/{slug}
 
+# 패키지 매니저 감지
+if [ -f pnpm-lock.yaml ]; then pm="pnpm"
+elif [ -f yarn.lock ]; then pm="yarn"
+elif [ -f package-lock.json ]; then pm="npm"
+elif [ -f bun.lockb ]; then pm="bun"
+else pm="pnpm"; fi
+
 # .env 파일 복사 (없으면 .env.example 사용)
 if [ -f ../.env ]; then
   cp ../.env .env
@@ -561,7 +572,7 @@ elif [ -f ../.claude/.env.example ]; then
   echo "⚠️  .env.example을 복사했습니다. 토큰을 입력하세요."
 fi
 
-pnpm install
+${pm} install
 ```
 
 ### 2-3. 플랜 파일 복사
@@ -640,12 +651,12 @@ Group N의 각 Task에 대해:
    - 성공 케이스 + 에러 케이스 + 엣지 케이스
    - Domain: 단위 테스트 (Entity 생성, 도메인 규칙 검증)
    - Application: E2E 테스트 (supertest, HTTP 상태코드별)
-   - pnpm test → RED 확인 (테스트 실패 = 정상)
+   - ${pm} test → RED 확인 (테스트 실패 = 정상)
 
 2. 최소 구현
    - 인터페이스 계약(3-1a에서 생성한 타입)을 import하여 사용
    - Phase 0 스캔에서 파악한 기존 패턴을 따라 구현
-   - pnpm test → GREEN 확인
+   - ${pm} test → GREEN 확인
 
 3. 리팩토링
    - 중복 제거, 네이밍 개선, 불필요한 코드 정리
@@ -672,18 +683,26 @@ cd .worktrees/{slug}
 #### Standard 모드 — 검증 루프 (최대 3회)
 
 ```
+# 스크립트 존재 여부 확인 (package.json에 정의된 스크립트만 실행)
+scripts=$(node -e "const p=require('./package.json');console.log(Object.keys(p.scripts||{}).join(','))")
+
 attempt = 0
 
 while attempt < 3:
   attempt++
 
-  1. pnpm biome check --write .
+  1. if "biome" in scripts: ${pm} biome check --write .
+     else: echo "biome 스크립트 없음 — 건너뜀"
      → 실패 시: 에러 수정 → 처음부터 재시작 (continue)
 
-  2. pnpm build
+  2. if "build" in scripts: ${pm} build
+     else: echo "build 스크립트 없음 — 건너뜀"
      → 실패 시: 에러 수정 → 처음부터 재시작 (continue)
 
-  3. pnpm test:e2e:gifca
+  3. if "test:e2e:gifca" in scripts: ${pm} test:e2e:gifca
+     elif "test:e2e" in scripts: ${pm} test:e2e
+     elif "test" in scripts: ${pm} test
+     else: echo "테스트 스크립트 없음 — 건너뜀"
      → 실패 시: 에러 수정 → 처음부터 재시작 (continue)
 
   4. 모두 성공 → 루프 종료 (break)
@@ -697,25 +716,34 @@ if attempt == 3:
 #### [Full] Full 모드 — 강화된 검증 루프 (최대 3회)
 
 ```
+# 스크립트 존재 여부 확인 (package.json에 정의된 스크립트만 실행)
+scripts=$(node -e "const p=require('./package.json');console.log(Object.keys(p.scripts||{}).join(','))")
+
 attempt = 0
 prev_errors = []
 
 while attempt < 3:
   attempt++
 
-  1. pnpm biome check --write .
+  1. if "biome" in scripts: ${pm} biome check --write .
+     else: echo "biome 스크립트 없음 — 건너뜀"
      → 실패 시: 에러 수정 → 처음부터 재시작 (continue)
 
-  2. pnpm tsc --noEmit
+  2. ${pm} tsc --noEmit
      → 실패 시: 에러 수정 → 처음부터 재시작 (continue)
 
-  3. pnpm build
+  3. if "build" in scripts: ${pm} build
+     else: echo "build 스크립트 없음 — 건너뜀"
      → 실패 시: 에러 수정 → 처음부터 재시작 (continue)
 
-  4. pnpm test:e2e:gifca (feature 관련)
+  4. if "test:e2e:gifca" in scripts: ${pm} test:e2e:gifca
+     elif "test:e2e" in scripts: ${pm} test:e2e
+     elif "test" in scripts: ${pm} test
+     else: echo "테스트 스크립트 없음 — 건너뜀"
      → 실패 시: 에러 수정 → 처음부터 재시작 (continue)
 
-  5. pnpm test:e2e (전체)
+  5. if "test:e2e" in scripts: ${pm} test:e2e (전체)
+     else: echo "test:e2e 스크립트 없음 — 건너뜀"
      → 실패 시: 기존 테스트 깨짐 확인 → 수정 → 처음부터 재시작 (continue)
 
   6. 모두 성공 → 루프 종료 (break)
@@ -773,7 +801,7 @@ Mode: {standard|full}
 
 ## 복구 명령어
 cd {worktree_path}
-pnpm build  # 수동 확인 후 에러 수정
+${pm} build  # 수동 확인 후 에러 수정
 # 수정 완료 후:
 /orchestrate  # Phase 3부터 재개
 ```
@@ -965,6 +993,14 @@ git commit -m "{type}({scope}): {description}"
 ### 4-4. PR 생성
 
 ```bash
+# 리모트 존재 여부 확인
+if ! git remote | grep -q origin; then
+  echo "⚠️  git remote 'origin'이 없습니다. PR 생성을 건너뜁니다."
+  echo "수동으로 remote를 추가한 후 /orchestrate를 재실행하세요:"
+  echo "  git remote add origin <repo-url>"
+  exit 1
+fi
+
 git push -u origin {branch}
 
 gh pr create --title "{type}({scope}): {description}" --body "$(cat <<'EOF'
@@ -1020,8 +1056,8 @@ Entity 설계, Use Case 흐름, DB 스키마 중 핵심만.}
 | {Round 1 최다 이슈 에이전트} | {PASS/이슈 N건} | 이슈가 실제로 해결됐는지 |
 
 ## 테스트
-- [x] `pnpm biome check` 통과
-- [x] `pnpm build` 통과
+- [x] `${pm} biome check` 통과
+- [x] `${pm} build` 통과
 - [x] E2E 테스트 ({N}개 케이스: 성공 + 400/401/404/409)
 - [x] 기존 테스트 통과
 
@@ -1105,7 +1141,7 @@ cd .worktrees/{slug}
 
 #### Standard 모드
 ```bash
-pnpm biome check --write . && pnpm build && pnpm test:e2e:gifca
+${pm} biome check --write . && ${pm} build && ${pm} test:e2e:gifca
 git add {modified files}
 git commit -m "fix({scope}): address review feedback"
 git push
@@ -1113,7 +1149,7 @@ git push
 
 #### Full 모드
 ```bash
-pnpm biome check --write . && pnpm tsc --noEmit && pnpm build && pnpm test:e2e:gifca && pnpm test:e2e
+${pm} biome check --write . && ${pm} tsc --noEmit && ${pm} build && ${pm} test:e2e:gifca && ${pm} test:e2e
 git add {modified files}
 git commit -m "fix({scope}): address review feedback"
 git push
@@ -1232,7 +1268,7 @@ mcp__jira__jira_transition_issue({ issue_key: "{JIRA-KEY}", transition: "Done" }
 
 ### Phase 3: 빌드 실패
 
-**증상**: `pnpm build` 실패, worktree에 갇힘
+**증상**: `${pm} build` 실패, worktree에 갇힘
 
 **복구**:
 ```bash
@@ -1240,8 +1276,8 @@ mcp__jira__jira_transition_issue({ issue_key: "{JIRA-KEY}", transition: "Done" }
 cd .worktrees/{slug}
 
 # 2. 에러 수정 후 다시 빌드
-pnpm biome check --write .
-pnpm build
+${pm} biome check --write .
+${pm} build
 
 # 3. 성공하면 /orchestrate 재실행
 ```
