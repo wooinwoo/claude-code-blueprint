@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const i=JSON.parse(d);const f=i.tool_input?.file_path||'';if(/\\.(tsx|jsx|html|css|scss)$/.test(f)){const c=i.tool_input?.new_string||'';const issues=[];if(/<img(?![^>]*alt=)[^>]*>/i.test(c))issues.push('img 태그에 alt 속성 누락');if(/onClick/.test(c)&&!/onKeyDown|onKeyPress|onKeyUp/.test(c)&&/<div|<span/.test(c))issues.push('클릭 핸들러에 키보드 이벤트 핸들러 누락 (a11y)');if(issues.length){console.error('[A11y Hook] 접근성 경고:');issues.forEach(i=>console.error('  - '+i))}}}catch{}console.log(d)})\""
+          }
+        ],
+        "description": "Auto a11y check: warn about accessibility issues in UI file edits"
+      }
+    ]
+  }
+}
