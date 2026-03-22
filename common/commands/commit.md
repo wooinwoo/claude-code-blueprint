@@ -93,6 +93,26 @@ git add src/auth/jwt.strategy.ts
 git commit -m "fix(auth): reject JWT tokens for deleted or deactivated users"
 ```
 
+## 타입 결정 트리
+
+| 변경 내용 | type |
+|-----------|------|
+| 새 파일 + 새 기능 로직 | `feat` |
+| 기존 로직 수정 → 버그/오류 해결 | `fix` |
+| 기존 로직 수정 → 가독성/구조 개선 (동작 변경 없음) | `refactor` |
+| 테스트 파일만 변경 | `test` |
+| 문서만 변경 (.md) | `docs` |
+| 빌드/설정/의존성만 변경 | `chore` |
+| 스타일만 변경 (포맷, 세미콜론 등) | `style` |
+| 성능 개선 (동작 동일, 속도 향상) | `perf` |
+
+## 스코프 결정
+
+1. 변경 파일 경로에서 공통 디렉토리 추출
+2. 80% 이상 파일이 같은 디렉토리 → 그 디렉토리가 scope
+3. 여러 디렉토리에 걸쳐 있으면 → 가장 상위 공통 디렉토리 또는 기능명
+4. 판단 불가 → scope 생략
+
 ## 금지사항
 
 - `git add -A` / `git add .` 사용 금지

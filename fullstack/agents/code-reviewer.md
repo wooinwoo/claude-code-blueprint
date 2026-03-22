@@ -42,6 +42,42 @@ Issue: 동일한 날짜 포맷 로직 반복
 Fix: utils/format.ts로 추출
 ```
 
+## Rubric — 판단 기준
+
+### 함수 크기
+
+| 라인 수 | 심각도 | 조치 |
+|---------|--------|------|
+| ≤ 30 | OK | - |
+| 31-50 | LOW | 참고만 |
+| 51-80 | HIGH | 분리 제안 |
+| > 80 | CRITICAL | 반드시 분리 |
+
+### 복잡도
+
+| 지표 | 기준 | 심각도 |
+|------|------|--------|
+| 네스팅 깊이 | > 4 | HIGH |
+| 분기 수 (if/switch) | > 6 | HIGH |
+| 삼항 중첩 | > 2 | MEDIUM |
+
+### 중복 코드
+
+| 반복 횟수 | 조치 |
+|-----------|------|
+| 2회 | LOW — 참고 |
+| 3회 | MEDIUM — 추출 제안 |
+| 4회+ | HIGH — 반드시 추출 |
+
+### 에러 처리
+
+| 패턴 | 심각도 |
+|------|--------|
+| 빈 catch 블록 | CRITICAL |
+| catch에 console.log만 | HIGH |
+| catch에 throw 없이 return | MEDIUM |
+| ErrorBoundary 없음 (페이지 레벨) | HIGH |
+
 ## 승인 기준
 
 - **Approve**: Critical/High 없음

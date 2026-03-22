@@ -74,6 +74,40 @@ Issue: <button onClick={onClose}>X</button> aria-label 없음
 Fix: aria-label="닫기" 추가
 ```
 
+## Rubric — 판단 기준
+
+### 컴포넌트 크기
+
+| 라인 수 | 심각도 | 조치 |
+|---------|--------|------|
+| ≤ 100 | OK | - |
+| 101-200 | MEDIUM | 분리 고려 |
+| > 200 | HIGH | 반드시 분리 |
+
+### Prop Drilling
+
+| 깊이 (데이터 소스 → 소비 컴포넌트) | 심각도 | 조치 |
+|----------------------------------|--------|------|
+| 1-2 | OK | - |
+| 3 | MEDIUM | Context/store 제안 |
+| 4+ | HIGH | 반드시 Context/store |
+
+### useEffect 의존성
+
+| 상태 | 심각도 |
+|------|--------|
+| 의존성 배열 누락 (빈 배열 아닌 아예 없음) | CRITICAL |
+| 의존성 누락 (ESLint 경고) | HIGH |
+| 의존성 과잉 (6개+) | MEDIUM — 로직 분리 고려 |
+
+### 배열 key
+
+| 패턴 | 심각도 |
+|------|--------|
+| 동적 리스트에 index key | HIGH |
+| 정적 리스트에 index key | LOW (허용) |
+| key 자체 누락 | CRITICAL |
+
 ## 승인 기준
 
 - **Block**: Critical (Hook 규칙 위반) → 즉시 수정
