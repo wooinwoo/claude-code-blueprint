@@ -1,3 +1,9 @@
+---
+paths:
+  - "src/**/*.{tsx,jsx}"
+  - "app/**/*.{tsx,jsx}"
+  - "components/**/*.{tsx,jsx}"
+---
 # React 렌더링 & 상태 규칙
 
 리렌더 최적화, 렌더링 성능, 클라이언트 데이터 패턴.

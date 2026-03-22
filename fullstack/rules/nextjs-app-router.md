@@ -1,3 +1,9 @@
+---
+paths:
+  - "app/**/*"
+  - "src/**/*.{ts,tsx}"
+  - "next.config.*"
+---
 # Next.js App Router 컨벤션
 
 App Router 파일 구조, Server/Client 컴포넌트, 라우팅 패턴.

@@ -1,3 +1,11 @@
+---
+paths:
+  - "src/**/*.ts"
+  - "test/**/*.ts"
+  - "*.module.ts"
+  - "*.controller.ts"
+  - "*.service.ts"
+---
 # Backend Architecture — Quick Reference
 
 > **Full reference**: Use the `hexagonal-architecture` skill for detailed patterns, code examples, and directory structures.

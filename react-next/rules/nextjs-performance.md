@@ -1,3 +1,9 @@
+---
+paths:
+  - "app/**/*"
+  - "src/**/*.{ts,tsx}"
+  - "next.config.*"
+---
 # Next.js & React 성능 규칙
 
 Vercel React Best Practices 기반. 코드 작성/리뷰 시 항상 적용.

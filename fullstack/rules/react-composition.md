@@ -1,3 +1,9 @@
+---
+paths:
+  - "src/**/*.{tsx,jsx}"
+  - "app/**/*.{tsx,jsx}"
+  - "components/**/*.{tsx,jsx}"
+---
 # React 컴포넌트 구조 규칙
 
 Vercel Composition Patterns 기반. 컴포넌트 설계/리팩토링 시 항상 적용.

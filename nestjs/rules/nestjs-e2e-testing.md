@@ -1,3 +1,11 @@
+---
+paths:
+  - "src/**/*.ts"
+  - "test/**/*.ts"
+  - "*.module.ts"
+  - "*.controller.ts"
+  - "*.service.ts"
+---
 # NestJS E2E Testing Rules
 
 Guidelines for writing backend E2E tests. Focus on tests with business value and skip unnecessary ones.
