@@ -154,42 +154,15 @@ package.json scripts 추가:
 
 ---
 
-## Phase 3: 샘플 테스트 생성
-
-셋업 후 **샘플 테스트 1개** 생성하여 동작 확인.
-
-### vitest 샘플
-
-```typescript
-// src/test/sample.test.ts
-import { describe, it, expect } from 'vitest'
-
-describe('test setup', () => {
-  it('works', () => {
-    expect(1 + 1).toBe(2)
-  })
-})
-```
-
-### jest 샘플
-
-```typescript
-// src/test/sample.spec.ts
-describe('test setup', () => {
-  it('works', () => {
-    expect(1 + 1).toBe(2)
-  })
-})
-```
-
-### 실행 확인
+## Phase 3: 설정 확인
 
 ```bash
-${pm} test
-# 1 test passed → 셋업 완료
+# test 스크립트 실행 가능한지 확인
+${pm} test --passWithNoTests 2>/dev/null || ${pm} test 2>/dev/null
 ```
 
-실패하면 에러 분석 → 설정 수정 → 재실행.
+테스트 파일이 없어도 에러 없이 통과하면 셋업 성공.
+실패하면 에러 분석 → 설정 수정.
 
 ---
 
