@@ -121,9 +121,17 @@ Codebase Scanner (subagent_type: general-purpose)
 prompt: "프로젝트에서 '{feature_description}'과 유사한 기존 구현을 찾아줘.
 
 스캔 범위: {scope}
+
+먼저 프로젝트 구조를 파악해줘:
+- 모노레포인지 (pnpm-workspace.yaml, turbo.json, nx.json, lerna.json 확인)
+- 모노레포면 패키지 경로 (packages/*, apps/* 등)
+- 단일 레포면 프론트/백 소스 위치 (src/, src/client/, src/server/ 등)
+- 패키지 매니저 (pnpm/npm/yarn/bun — lock 파일로 판별)
+
+그 다음 scope에 따라:
 - fullstack: 프론트엔드 + 백엔드 모두
-- frontend: src/components, src/pages, src/routes, src/hooks, src/services
-- backend: src/modules, src/controllers, src/services, src/entities, src/dto
+- frontend: 프론트엔드 소스 디렉토리만
+- backend: 백엔드 소스 디렉토리만
 
 찾을 것:
 
@@ -256,7 +264,12 @@ interface PaginatedResponse<T> {
 ```bash
 git worktree add .worktrees/{slug} -b feature/{slug}
 cd .worktrees/{slug}
-pnpm install
+
+# 패키지 매니저 자동 감지 (lock 파일 기준)
+# pnpm-lock.yaml → pnpm install
+# package-lock.json → npm install
+# yarn.lock → yarn install
+# bun.lockb → bun install
 ```
 
 ---
@@ -344,7 +357,7 @@ if (scope !== "backend") {
 | **React Reviewer** | 조건부 | .tsx/.jsx 변경 시 |
 | **Performance Reviewer** | 조건부 | 컴포넌트/훅 변경 시 |
 | **NestJS Pattern Reviewer** | 조건부 | .module.ts/.controller.ts 변경 시 |
-| **Database Reviewer** | 조건부 | .entity.ts/.migration.ts 변경 시 |
+| **Database Reviewer** | 조건부 | .entity.ts/.migration.ts, schema.prisma, drizzle schema 변경 시 |
 | **Convention Reviewer** | 선택 | Full 모드에서만 |
 | **Schema Designer** | 선택 | Full 모드 + DB 스키마 변경 시 |
 
@@ -397,6 +410,22 @@ git branch -d feature/{slug}
   "phase": "develop",
   "branch": "feature/product-search",
   "jira_key": "PROJ-123",
-  "created_at": "2026-03-22T10:00:00Z"
+  "created_at": "2026-03-22T10:00:00Z",
+  "worktree_path": ".worktrees/product-search",
+  "plan_path": "plans/product-search.md",
+  "scan_path": "plans/product-search-scan.md",
+  "package_manager": "pnpm",
+  "project_structure": "monorepo",
+  "develop_progress": {
+    "shared_types": "done",
+    "backend_impl": "done",
+    "backend_verify": "done",
+    "frontend_impl": "in_progress",
+    "frontend_verify": "pending",
+    "integration": "pending"
+  }
 }
 ```
+
+`develop_progress`는 fullstack scope일 때만 사용. frontend/backend 단독이면 불필요.
+세션 복구 시 `develop_progress`를 읽어 완료된 step은 건너뛰고 이어서 진행.
