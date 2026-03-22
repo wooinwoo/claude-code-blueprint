@@ -102,7 +102,23 @@ Line 95-110: calculateDDay() — 음수 D-Day 처리
 
 ---
 
-## Phase 3: 갭 채우기 (`fill` 모드)
+## Phase 3: 갭 채우기
+
+`fill` 플래그 없이 실행했으면 여기서 질문:
+
+```typescript
+AskUserQuestion([{
+  question: `미커버 파일 ${uncovered_count}개. 테스트를 생성할까요?`,
+  header: "테스트 생성",
+  options: [
+    { label: "전체 생성", description: "미커버 파일 전부 테스트 생성" },
+    { label: "상위만", description: "CRITICAL + HIGH 우선순위만" },
+    { label: "아니요", description: "리포트만 확인" }
+  ]
+}])
+```
+
+`fill` 플래그로 실행했으면 이 질문 스킵 → 전체 생성으로 바로 진행.
 
 ### 3-1. 테스트 생성 우선순위
 
