@@ -584,12 +584,23 @@ git commit -m "chore({scope}): add interface contracts for {feature}"
 2. **공통 컴포넌트** — Props 타입, 스타일링, a11y
 3. **페이지 컴포넌트** — 레이아웃, Server/Client 경계, 반응형
 4. **에러/로딩 처리** — 에러 바운더리, Suspense, 빈 상태
-5. **테스트** — RTL 컴포넌트 테스트, hook 테스트
 
 > 독립적인 작업이면 Task tool로 병렬 실행 가능.
 > 단, 파일 충돌이 없도록 scope를 명확히 분리.
 
-#### [Full] Full 모드 — TDD + Incremental Commit
+**Standard 모드 테스트 필수 규칙:**
+
+Standard 모드에서도 각 구현 그룹 완료 후 해당 코드의 테스트를 작성한다. TDD(테스트 먼저)는 Full 모드에서만 강제하지만, 테스트 작성 자체는 Standard에서도 필수.
+
+구현 순서:
+1. 기능 코드 작성
+2. 해당 기능의 유닛 테스트 작성
+3. ${pm} test 실행 → 실패하면 수정
+4. 통과하면 다음 그룹으로
+
+테스트가 없는 코드는 커밋하지 않는다.
+
+#### [Full] Full 모드 — TDD (테스트 먼저) + Incremental Commit
 
 Architect 산출물의 Implementation Groups와 TDD Anchors에 따라 구현합니다.
 
@@ -1262,7 +1273,7 @@ mcp__jira__jira_transition_issue({ issue_key: "{JIRA-KEY}", transition: "Done" }
 | **Phase 0** | - | Codebase Scan (1 agent) |
 | **Phase 1 설계** | 수동 플랜 작성 | Architect(opus) 심층 설계 + 인터페이스 계약 |
 | **Phase 1 검증** | 2 agents (feasibility + impact) | 3 agents (+architecture review) |
-| **Phase 3 순서** | 구현 → 테스트 | TDD (테스트 → 구현) + incremental commit |
+| **Phase 3 순서** | 구현 → 테스트 (필수) | TDD (테스트 먼저 → 구현) + incremental commit |
 | **Phase 3 검증** | lint → build → test | lint → tsc → build → test(feature) → test(full) + 설계 회귀 판단 |
 | **Phase 4 리뷰** | 2 필수 + 3 선택 (1 round) | 5 전원 (2 rounds) |
 | **Phase 4 수정** | Critical/High 수정, Low 기록만 | 전부 수정 |
