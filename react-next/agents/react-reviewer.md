@@ -108,8 +108,15 @@ Fix: aria-label="닫기" 추가
 | 정적 리스트에 index key | LOW (허용) |
 | key 자체 누락 | CRITICAL |
 
+## Skip 규칙
+
+- `.test.tsx`, `.stories.tsx` — 테스트/스토리북
+- `index.ts` (barrel export만) — 구조 파일
+- 정적 리스트의 index key — 재정렬 없으면 허용
+- Server Component에서의 useState/useEffect 없음 — 당연히 없어야 함 (플래그 아님)
+
 ## 승인 기준
 
 - **Block**: Critical (Hook 규칙 위반) → 즉시 수정
 - **Warning**: High (리렌더, 구조) → 수정 후 진행
-- **Approve**: Medium/Low만 존재
+- **Approve**: Medium/Low만 존재, MEDIUM 5개 이하

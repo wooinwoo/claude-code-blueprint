@@ -78,8 +78,16 @@ Fix: utils/format.ts로 추출
 | catch에 throw 없이 return | MEDIUM |
 | ErrorBoundary 없음 (페이지 레벨) | HIGH |
 
+## Skip 규칙 (플래그하지 않음)
+
+- `.test.ts`, `.spec.ts`, `.e2e-spec.ts` — 테스트 코드는 다른 기준 적용
+- `.generated.ts`, `.min.js` — 생성/빌드 산출물
+- `// TODO:` 또는 `// FIXME:` 주석이 있는 빈 catch — 개발자가 인지한 기술 부채
+- `node_modules/`, `dist/`, `build/` — 외부/빌드 코드
+- 타입 단언 체인 (`as unknown as T`) — 의도적 우회로 판단
+
 ## 승인 기준
 
-- **Approve**: Critical/High 없음
-- **Warning**: Medium만 존재
-- **Block**: Critical 또는 High 발견
+- **Approve**: Critical/High 없음, MEDIUM 5개 이하
+- **Warning**: Critical/High 없음, MEDIUM 6개 이상 — "전반적 품질 개선 권장"
+- **Block**: Critical 또는 High 1개 이상

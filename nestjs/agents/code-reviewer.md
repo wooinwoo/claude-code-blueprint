@@ -78,8 +78,16 @@ Fix: 공용 mapper util로 추출
 | HttpException 없이 일반 Error throw | MEDIUM |
 | 에러 메시지에 내부 정보 노출 | HIGH |
 
+## Skip 규칙
+
+- `.spec.ts`, `.e2e-spec.ts` — 테스트 코드
+- `.generated.ts`, `.dto.ts`의 class-validator 데코레이터 — 자동 검증 코드
+- `node_modules/`, `dist/` — 외부/빌드 코드
+- `// TODO:`, `// FIXME:` 주석이 있는 빈 catch — 인지된 기술 부채
+- `@Module()` imports 배열 — DI 등록은 길어도 정상
+
 ## 승인 기준
 
-- **Approve**: Critical/High 없음
-- **Warning**: Medium만 존재
-- **Block**: Critical 또는 High 발견
+- **Approve**: Critical/High 없음, MEDIUM 5개 이하
+- **Warning**: Critical/High 없음, MEDIUM 6개 이상
+- **Block**: Critical 또는 High 1개 이상
