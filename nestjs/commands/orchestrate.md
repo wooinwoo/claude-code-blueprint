@@ -632,6 +632,21 @@ Grep("Symbol\\(|InjectionToken", glob="**/*.ts")
 }
 ```
 
+### 3-0a. 테스트 인프라 확인
+
+`detected.testRunner` 결과에 따라:
+
+**testRunner == null (테스트 인프라 없음):**
+1. `${pm} add -D jest @nestjs/testing supertest @types/jest @types/supertest ts-jest`
+2. `jest.config.js` 생성 (ts-jest preset, NestJS 패턴)
+3. package.json에 `"test": "jest"`, `"test:e2e": "jest --config ./test/jest-e2e.json"` 추가
+4. `git commit -m "chore: add test infrastructure"`
+
+**testRunner != null (테스트 인프라 있음):**
+1. 테스트 설정 파일 읽기
+2. 기존 테스트 파일 1-2개 읽기 → 구조 파악
+3. `detected.testConventions`에 저장
+
 ### 3-1. 작업 디렉토리 확인
 
 state 파일에서 `worktree` 경로를 읽어 해당 디렉토리에서 작업합니다.
@@ -683,6 +698,20 @@ Standard 모드에서도 각 구현 그룹 완료 후 해당 코드의 테스트
 4. 통과하면 다음 그룹으로
 
 테스트가 없는 코드는 커밋하지 않는다.
+
+### 테스트 존재 게이트 (커밋 전)
+
+```bash
+new_files=$(git diff --name-only --diff-filter=A -- '*.ts' '*.tsx' | grep -v '.test.' | grep -v '.spec.' | grep -v '.d.ts')
+for file in $new_files; do
+  test_file="${file%.ts}.test.ts"
+  if [ ! -f "$test_file" ]; then
+    echo "❌ 테스트 없음: $file → $test_file 작성 필요"
+  fi
+done
+```
+
+모든 신규 소스 파일에 대응 테스트가 있어야 커밋 진행.
 
 #### [Full] Full 모드 — TDD (테스트 먼저) + Incremental Commit
 
