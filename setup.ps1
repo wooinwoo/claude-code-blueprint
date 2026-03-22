@@ -19,7 +19,7 @@
 
 param(
     [Parameter(Mandatory)]
-    [ValidateSet("react-next", "nestjs", "java-web", "designer", "planner")]
+    [ValidateSet("react-next", "nestjs", "fullstack", "java-web", "designer", "planner")]
     [string]$Stack,
 
     [Parameter(Mandatory)]
@@ -38,7 +38,7 @@ if (-not (Test-Path $ProjectPath)) {
 $claudeDir = Join-Path $ProjectPath ".claude"
 
 # 프로필 타입 판별: dev (기존 3-layer) vs non-dev (designer/planner)
-$DevStacks = @("react-next", "nestjs", "java-web")
+$DevStacks = @("react-next", "nestjs", "fullstack", "java-web")
 $IsDevStack = $Stack -in $DevStacks
 
 Write-Host "=== claude-code-blueprint setup ===" -ForegroundColor Cyan
