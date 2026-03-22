@@ -596,6 +596,42 @@ jq '.phase = "develop"' .orchestrate/{slug}.json > .orchestrate/{slug}.json.tmp 
 
 **워크트리 디렉토리에서** 플랜에 따라 구현합니다.
 
+### 3-0. 프로젝트 패턴 탐지
+
+코드를 쓰기 전에 프로젝트 구조를 파악합니다. **Standard 모드에서도 반드시 실행.**
+
+```bash
+# 1. ORM 감지
+Grep("typeorm|@prisma/client|prisma|drizzle-orm", path="package.json")
+
+# 2. 테스트 러너 감지
+Grep("jest|vitest|@nestjs/testing", path="package.json")
+
+# 3. DB 타입 감지
+Grep("pg|mysql2|better-sqlite3|mongodb|@nestjs/typeorm|@nestjs/mongoose", path="package.json")
+
+# 4. 기존 모듈 구조 파악
+Glob("**/src/**/*.module.ts")
+Glob("**/src/**/*.entity.ts")
+Glob("**/src/**/*.schema.ts")
+
+# 5. DI 패턴 감지 (Symbol token vs class token)
+Grep("Symbol\\(|InjectionToken", glob="**/*.ts")
+```
+
+결과를 state 파일의 `"detected"` 필드에 저장:
+```json
+{
+  "detected": {
+    "orm": "drizzle",
+    "testRunner": "jest",
+    "dbType": "postgresql",
+    "modulePattern": "src/{domain}/infrastructure",
+    "diPattern": "symbol-token"
+  }
+}
+```
+
 ### 3-1. 작업 디렉토리 확인
 
 state 파일에서 `worktree` 경로를 읽어 해당 디렉토리에서 작업합니다.
@@ -685,6 +721,7 @@ cd .worktrees/{slug}
 ```
 # 스크립트 존재 여부 확인 (package.json에 정의된 스크립트만 실행)
 scripts=$(node -e "const p=require('./package.json');console.log(Object.keys(p.scripts||{}).join(','))")
+# 모노레포 감지 시: ${pm} --filter {package-name} {script} 또는 해당 패키지 디렉토리에서 직접 실행
 
 attempt = 0
 
@@ -707,10 +744,14 @@ while attempt < 3:
 
   4. 모두 성공 → 루프 종료 (break)
 
+스크립트가 하나도 없으면 "⚠️ 검증 스크립트 없음 — 타입체크만 시도" 후 `npx tsc --noEmit`만 실행.
+tsc 자체도 실패하면 (tsconfig 없음, 의존성 미설치 등) "⚠️ 타입체크 불가 — 코드 구조 수동 확인 후 진행" 출력 후 다음 단계로.
+
 if attempt == 3:
-  에러 로그 출력
-  "검증 3회 실패. 다음 에러를 확인하세요: [마지막 에러]"
-  Phase 중단 (다음 Phase로 넘어가지 않음)
+  에러 내용을 사용자에게 보여주고 선택 요청:
+  1. 계속 시도 (추가 3회)
+  2. 이 Step 스킵하고 다음 진행
+  3. 파이프라인 중단
 ```
 
 #### [Full] Full 모드 — 강화된 검증 루프 (최대 3회)
@@ -718,6 +759,7 @@ if attempt == 3:
 ```
 # 스크립트 존재 여부 확인 (package.json에 정의된 스크립트만 실행)
 scripts=$(node -e "const p=require('./package.json');console.log(Object.keys(p.scripts||{}).join(','))")
+# 모노레포 감지 시: ${pm} --filter {package-name} {script} 또는 해당 패키지 디렉토리에서 직접 실행
 
 attempt = 0
 prev_errors = []
@@ -729,8 +771,9 @@ while attempt < 3:
      else: echo "biome 스크립트 없음 — 건너뜀"
      → 실패 시: 에러 수정 → 처음부터 재시작 (continue)
 
-  2. ${pm} tsc --noEmit
-     → 실패 시: 에러 수정 → 처음부터 재시작 (continue)
+  2. if script_exists "tsc" || has_tsconfig; then ${pm} tsc --noEmit; fi
+     → tsc 자체 실패 (tsconfig 없음, 의존성 미설치 등): "⚠️ 타입체크 불가" 경고 후 다음 단계로
+     → 타입 에러 실패 시: 에러 수정 → 처음부터 재시작 (continue)
 
   3. if "build" in scripts: ${pm} build
      else: echo "build 스크립트 없음 — 건너뜀"
@@ -846,6 +889,28 @@ git diff --name-only HEAD
 ```
 
 **Step 2: 에이전트 투입 결정**
+
+#### 에이전트 호출 방법
+
+각 에이전트는 `.claude/agents/{agent-name}.md` 파일에 정의되어 있습니다.
+
+```typescript
+// 에이전트별로 독립 서브에이전트 실행:
+const diff = Bash("git diff main...HEAD")
+
+// 방법 1: Agent 도구로 서브에이전트 위임
+Agent("code-reviewer", `다음 diff를 리뷰해주세요:\n${diff}`)
+Agent("security-reviewer", `다음 diff를 보안 관점에서 리뷰해주세요:\n${diff}`)
+
+// 방법 2: 수동 실행 (Agent 도구 없을 때)
+// .claude/agents/code-reviewer.md를 Read → 지시에 따라 리뷰 수행
+```
+
+각 에이전트의 출력을 수집하여 통합 리포트로 합칩니다.
+
+**에이전트 파일이 없으면**: 해당 에이전트 스킵하고 "⚠️ {agent-name} 에이전트 파일 없음 — 스킵" 출력. 나머지 에이전트는 정상 실행.
+
+**컨텍스트 윈도우 초과 시**: 에이전트 수를 줄이거나, `/compact` 후 남은 에이전트 실행. Full 모드 2라운드 중 컨텍스트 부족하면 1라운드로 축소하고 경고.
 
 > **모드 분기**: `mode` 값에 따라 아래 **해당 모드 섹션만** 실행합니다.
 
