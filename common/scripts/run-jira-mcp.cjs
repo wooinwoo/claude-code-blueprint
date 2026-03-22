@@ -8,17 +8,22 @@
 const fs = require("fs");
 const path = require("path");
 
-// Load .env from .claude/.env
-const envPath = path.join(__dirname, "..", ".env");
-if (fs.existsSync(envPath)) {
-  const content = fs.readFileSync(envPath, "utf8");
-  for (const line of content.split(/\r?\n/)) {
-    const match = line.match(/^([^=\s#]+)=(.*)$/);
-    if (match) {
-      process.env[match[1]] = match[2].trim();
+// Load .env: 글로벌(~/.claude/.env) → 프로젝트(.claude/.env) 순서
+function loadEnv(filePath) {
+  if (fs.existsSync(filePath)) {
+    const content = fs.readFileSync(filePath, "utf8");
+    for (const line of content.split(/\r?\n/)) {
+      const match = line.match(/^([^=\s#]+)=(.*)$/);
+      if (match) {
+        process.env[match[1]] = match[2].trim();
+      }
     }
   }
 }
+
+const homeDir = process.env.USERPROFILE || process.env.HOME;
+loadEnv(path.join(homeDir, ".claude", ".env"));
+loadEnv(path.join(__dirname, "..", ".env"));
 
 const token = process.env.JIRA_TOKEN;
 const jiraUrl = process.env.JIRA_URL || "https://your-company.atlassian.net";
