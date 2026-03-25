@@ -1110,9 +1110,14 @@ if ! git remote | grep -q origin; then
   exit 1
 fi
 
+# work 브랜치 없으면 생성
+if ! git ls-remote --heads origin work | grep -q work; then
+  git push origin HEAD:refs/heads/work
+fi
+
 git push -u origin {branch}
 
-gh pr create --title "{type}({scope}): {description}" --body "$(cat <<'EOF'
+gh pr create --title "{type}({scope}): {description}" --base work --body "$(cat <<'EOF'
 <!-- 작성 규칙:
 - 모든 {placeholder}를 실제 값으로 치환
 - 해당 없는 선택 섹션은 제거 (빈 섹션 남기지 말 것)
