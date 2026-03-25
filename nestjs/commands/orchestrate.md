@@ -81,7 +81,7 @@ state 파일의 `phase` 값:
 - `"branch"` → **Phase 2: Branch**
 - `"develop"` → **Phase 3: Develop**
 - `"done"` → **Phase 4: Review + Merge**
-- `"pr"` → **Phase 5: Feedback**
+- `"merged"` → **Phase 5: 추가 수정**
 - `"complete"` → **Phase 6: Clean**
 
 ```
@@ -1140,7 +1140,7 @@ mcp__jira__jira_transition_issue({ issue_key: "{JIRA-KEY}", transition: "In Revi
 cd ../..
 
 # state 파일 업데이트
-jq '.phase = "pr"' .orchestrate/{slug}.json > .orchestrate/{slug}.json.tmp && mv .orchestrate/{slug}.json.tmp .orchestrate/{slug}.json
+jq '.phase = "merged"' .orchestrate/{slug}.json > .orchestrate/{slug}.json.tmp && mv .orchestrate/{slug}.json.tmp .orchestrate/{slug}.json
 ```
 
 ```bash
