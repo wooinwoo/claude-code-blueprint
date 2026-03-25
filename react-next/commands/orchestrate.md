@@ -1,5 +1,5 @@
 ---
-description: React feature pipeline with worktree isolation. Plan → Branch → Develop → Merge & PR. Use --full for maximum quality.
+description: React feature pipeline with worktree isolation. Plan → Branch → Develop → Review + Merge. Use --full for maximum quality.
 ---
 
 # Orchestrate — React/Next.js Pipeline
@@ -80,7 +80,7 @@ state 파일의 `phase` 값:
 - `"scan"` → **Phase 0: Scan** (full 모드)
 - `"branch"` → **Phase 2: Branch**
 - `"develop"` → **Phase 3: Develop**
-- `"done"` → **Phase 4: PR**
+- `"done"` → **Phase 4: Review + Merge**
 - `"pr"` → **Phase 5: Feedback**
 - `"complete"` → **Phase 6: Clean**
 
@@ -93,16 +93,16 @@ Phase 2: Branch        → 워크트리 + 브랜치 생성
                          ↓ 자동 연결
 Phase 3: Develop       → 워크트리에서 구현
                          ↓ 자동 연결
-Phase 4: PR            → 검증 → 에이전트 리뷰 → 커밋 → PR 생성
-                         ■ 여기서 정지 (리뷰 대기)
+Phase 4: Review        → 검증 → 에이전트 리뷰 → 커밋 → work에 머지
+                         ■ 여기서 정지
 Phase 5: 추가 수정     → 필요 시 수정 후 work에 재머지
-Phase 6: Clean         → PR 병합 확인 → 워크트리/브랜치 삭제
+Phase 6: Clean         → 워크트리/브랜치 삭제
 ```
 
 ### 자동 연결 규칙
 
 Phase 1 승인 후 **Phase 2→3→4를 한 번에 실행**합니다. 중간에 멈추지 않습니다.
-사용자 입력이 필요한 시점은 **Phase 1 (플랜 승인)**과 **Phase 5 (리뷰 피드백)** 뿐입니다.
+사용자 입력이 필요한 시점은 **Phase 1 (플랜 승인)**과 **Phase 5 (추가 수정)** 뿐입니다.
 
 state 파일의 phase 값은 **세션 복구용**입니다. 세션이 중간에 끊기면 `/orchestrate`로 해당 phase부터 이어갑니다.
 
@@ -175,7 +175,7 @@ prompt: "프로젝트 {project_path}에서 '{feature_description}'과 유사한 
 allowedPrompts: [
   { tool: "Bash", prompt: "git operations (add, commit, push, checkout, branch, worktree)" },
   { tool: "Bash", prompt: "build and validation (install, lint, build, test)" },
-  { tool: "Bash", prompt: "GitHub CLI operations (gh pr create, view)" },
+  { tool: "Bash", prompt: "gh (PR 없음 — work 직접 머지)" },
   { tool: "Bash", prompt: "file operations (cp, mv, rm, mkdir)" }
 ]
 ```
@@ -484,10 +484,10 @@ fi
 ### git remote 확인
 
 ```bash
-# PR 생성을 위해 remote 필요. 없으면 Phase 4에서 PR 스킵
+# work 브랜치 머지를 위해 remote 필요. 없으면 Phase 4에서 머지 스킵
 remote_exists=$(git remote -v | head -1)
 if [ -z "$remote_exists" ]; then
-  echo "⚠️ git remote 없음. Phase 4에서 PR 생성을 스킵하고 로컬 커밋만 진행합니다."
+  echo "⚠️ git remote 없음. Phase 4에서 work 머지를 스킵하고 로컬 커밋만 진행합니다."
 fi
 ```
 
@@ -814,9 +814,9 @@ jq '.phase = "done"' .orchestrate/{slug}.json > .orchestrate/{slug}.json.tmp && 
 
 ---
 
-## Phase 4: PR
+## Phase 4: Review + Merge
 
-검증 후 PR을 생성합니다.
+검증 후 work 브랜치에 머지합니다.
 
 ### 4-0. Lighthouse 성능/접근성 체크
 
@@ -849,7 +849,7 @@ if (devServer === "200") {
 
     // Performance 50 미만 또는 Accessibility 80 미만이면 경고
     if (scores.performance < 50 || scores.accessibility < 80) {
-      console.log("⚠️ 성능/접근성 점수가 낮습니다. PR 전에 개선을 권장합니다.")
+      console.log("⚠️ 성능/접근성 점수가 낮습니다. 머지 전에 개선을 권장합니다.")
       // 차단하지는 않음 — 경고만
     }
 
@@ -1014,7 +1014,7 @@ prompt: "워크트리 {worktree_path}의 다음 변경 파일들을 React 패턴
 #### Standard 모드
 - **Critical/High** → 즉시 수정 후 4-1 재실행
 - **Medium** → 수정 후 진행
-- **Low/Info** → PR description의 "에이전트 리뷰 결과" 섹션에 기록, 진행
+- **Low/Info** → 커밋 메시지에 기록, 진행
 
 #### [Full] Full 모드
 - **Critical/High/Medium** → 즉시 수정
@@ -1076,7 +1076,7 @@ fi
 > **PR 없음.** feature 브랜치를 `work`에 직접 머지.
 > orchestrate로 만든 작업은 전부 `work`에 모임 → 일괄 테스트 → 배포 브랜치로 머지.
 
-**여기서 정지. 리뷰 대기. (remote 없으면 로컬 커밋 상태로 종료)**
+**여기서 정지. (remote 없으면 로컬 커밋 상태로 종료)**
 
 ### 4-5. Jira 상태 변경 (Jira 모드)
 
@@ -1090,125 +1090,41 @@ mcp__jira__jira_transition_issue({ issue_key: "{JIRA-KEY}", transition: "In Revi
 # 프로젝트 루트로 이동
 cd ../..
 
-# PR URL 추출 후 state 파일 업데이트
-PR_URL=$(gh pr view {branch} --json url -q .url)
-jq --arg url "$PR_URL" '.phase = "pr" | .pr_url = $url' .orchestrate/{slug}.json > .orchestrate/{slug}.json.tmp && mv .orchestrate/{slug}.json.tmp .orchestrate/{slug}.json
+# state 파일 업데이트
+jq '.phase = "pr"' .orchestrate/{slug}.json > .orchestrate/{slug}.json.tmp && mv .orchestrate/{slug}.json.tmp .orchestrate/{slug}.json
 ```
 
 ```bash
 # 시스템 알림
-node .claude/scripts/notify.cjs "orchestrate" "PR 생성 완료: {branch}"
+node .claude/scripts/notify.cjs "orchestrate" "work 브랜치에 머지 완료: {branch}"
 ```
 
 ```
-Phase 4 완료. PR이 생성되었습니다.
-- PR: {URL}
-- Branch: {branch} → main
+Phase 4 완료. work 브랜치에 머지 완료.
+- Branch: {branch} → work
 
-→ 리뷰 코멘트가 달리면 /orchestrate 를 호출하세요.
+→ 추가 수정이 필요하면 /orchestrate 를 호출하세요.
 ```
 
 ---
 
-## Phase 5: Feedback
+## Phase 5: 추가 수정
 
-PR 리뷰 코멘트를 확인하고 반영합니다. **이 phase는 반복됩니다.**
-
-### 5-1. PR 상태 확인
-
-```bash
-gh pr view {branch} --json state,reviews,comments,reviewRequests
-```
-
-| 상태 | 행동 |
-|------|------|
-| `MERGED` | → Phase 6 (Clean)으로 자동 전환 |
-| `OPEN` + 코멘트 없음 | → "리뷰 대기 중. 코멘트가 달리면 다시 호출하세요." |
-| `OPEN` + 코멘트 있음 | → 아래 5-2~5-5 실행 |
-| `CLOSED` | → "PR이 닫혔습니다. 상태를 확인하세요." |
-
-### 5-2. 리뷰 코멘트 읽기
-
-```bash
-gh api repos/{owner}/{repo}/pulls/{pr_number}/comments --jq '.[] | {path, line, body, user: .user.login}'
-gh api repos/{owner}/{repo}/pulls/{pr_number}/reviews --jq '.[] | {state, body, user: .user.login}'
-```
-
-코멘트를 분류:
-- **변경 요청** (request changes) → 반드시 반영
-- **제안** (suggestion) → 타당하면 반영
-- **질문** (question) → 코드에 주석 또는 PR 답글
-
-### 5-3. 워크트리에서 수정
-
-```bash
-cd .worktrees/{slug}
-# 코멘트 내용에 따라 수정
-```
-
-### 5-4. 검증 + push
-
-> **모드 분기**: state 파일의 `mode` 값에 따라 검증 범위가 달라집니다.
-
-#### Standard 모드
-```bash
-${pm} lint --fix && ${pm} build && ${pm} test
-git add {modified files}
-git commit -m "fix({scope}): address review feedback"
-git push
-```
-
-#### Full 모드
-```bash
-${pm} lint --fix && ${pm} tsc --noEmit && ${pm} build && ${pm} test --testPathPattern='{feature 관련}' && ${pm} test
-git add {modified files}
-git commit -m "fix({scope}): address review feedback"
-git push
-```
-
-### 5-5. 상태 유지
-
-phase는 `"pr"` 그대로 유지. (다음 리뷰까지 반복 가능)
-
-```
-리뷰 피드백 반영 완료. push 했습니다.
-- 수정 항목: {N}건
-- 리뷰어에게 re-review 요청하세요.
-
-→ 추가 코멘트가 달리면 /orchestrate 를 다시 호출하세요.
-→ PR이 병합되면 /orchestrate 로 정리합니다.
-```
+work 브랜치 머지 후 수정이 필요하면 `/orchestrate` 재실행.
+feature 브랜치에서 수정 → 커밋 → work에 다시 머지.
 
 ---
 
 ## Phase 6: Clean
 
-PR 병합 확인 후 워크트리와 브랜치를 정리합니다.
+워크트리와 브랜치를 정리합니다.
 
-> Phase 5에서 PR이 MERGED로 감지되면 자동으로 이 phase를 실행합니다.
-
-### 6-1. 정리 스크립트 실행
-
-**Bash 한 번으로 전부 처리합니다:**
+### 6-1. 정리
 
 ```bash
-# .claude 디렉토리에서 정리 스크립트 실행
-bash .claude/scripts/orchestrate-clean.sh $(pwd) {slug} {branch}
+git worktree remove .worktrees/{slug}
+git branch -d feature/{slug}
 ```
-
-이 스크립트가 자동으로:
-0. **PR merge 확인** (안전 장치)
-   - PR이 merge 안 됐으면 종료 (작업 내용 보호)
-   - merge 됐으면 안전하게 정리 진행
-1. main checkout + pull
-2. 워크트리 제거 (force + 디렉토리 정리)
-3. 로컬 브랜치 삭제
-4. 리모트 브랜치 삭제
-5. `.orchestrate/{slug}.json` 삭제
-
-**PR이 merge 안 됐을 때:**
-- 스크립트가 종료되고 안내 메시지 출력
-- PR을 merge하거나, 강제 삭제 명령어 사용
 
 ### 6-2. Jira 상태 변경 (Jira 모드)
 
@@ -1223,9 +1139,8 @@ mcp__jira__jira_transition_issue({ issue_key: "{JIRA-KEY}", transition: "Done" }
 ```
 정리 완료.
 - 워크트리: .worktrees/{slug} 삭제됨
-- 브랜치: {branch} 삭제됨 (local + remote)
+- 브랜치: {branch} 삭제됨
 - Jira: {JIRA-KEY} → Done
-- main: 최신 상태로 업데이트됨
 ```
 
 ---
@@ -1235,12 +1150,12 @@ mcp__jira__jira_transition_issue({ issue_key: "{JIRA-KEY}", transition: "Done" }
 ```
 /orchestrate 상품 검색 페이지. 필터링, 정렬, 무한스크롤.
 ```
-→ Standard: Phase 1 (플랜) → 승인 후 Phase 2→3→4 자동 실행 → PR 생성 후 정지
+→ Standard: Phase 1 (플랜) → 승인 후 Phase 2→3→4 자동 실행 → work 머지 후 정지
 
 ```
 /orchestrate --full 상품 검색 페이지. 필터링, 정렬, 무한스크롤.
 ```
-→ Full: Phase 0 (스캔) → Phase 1 (architect 설계) → 승인 후 Phase 2→3→4 자동 실행 → PR 생성 후 정지
+→ Full: Phase 0 (스캔) → Phase 1 (architect 설계) → 승인 후 Phase 2→3→4 자동 실행 → work 머지 후 정지
 
 ```
 /orchestrate
@@ -1293,15 +1208,19 @@ ${pm} build
 # 3. 성공하면 /orchestrate 재실행
 ```
 
-### Phase 4: PR 생성 실패
+### Phase 4: work 머지 실패
 
-**증상**: `gh pr create` 실패 (네트워크, 권한 등)
+**증상**: `git merge` 실패 (충돌 등)
 
 **복구**:
 ```bash
-# 1. 수동으로 PR 생성 가능한지 확인
-cd .worktrees/{slug}
-gh pr create --title "..." --body "..."
+# 1. work 브랜치에서 충돌 해결
+git checkout work
+git merge {branch} --no-ff
+# 충돌 파일 수정 후
+git add {resolved files}
+git commit
+git push origin work
 
 # 2. 또는 /orchestrate 재실행 (자동 재시도)
 ```
