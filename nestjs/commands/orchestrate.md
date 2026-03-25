@@ -95,7 +95,7 @@ Phase 3: Develop       → 워크트리에서 구현
                          ↓ 자동 연결
 Phase 4: PR            → 검증 → 에이전트 리뷰 → 커밋 → PR 생성
                          ■ 여기서 정지 (리뷰 대기)
-Phase 5: Feedback      → PR 코멘트 반영 (반복)   ← /orchestrate 수동 호출
+Phase 5: 추가 수정     → 필요 시 수정 후 work에 재머지
 Phase 6: Clean         → PR 병합 확인 → 워크트리/브랜치 삭제
 ```
 
@@ -1099,87 +1099,33 @@ git add {specific files}
 git commit -m "{type}({scope}): {description}"
 ```
 
-### 4-4. PR 생성
+### 4-4. work 브랜치에 머지
 
 ```bash
-# 리모트 존재 여부 확인
-if ! git remote | grep -q origin; then
-  echo "⚠️  git remote 'origin'이 없습니다. PR 생성을 건너뜁니다."
-  echo "수동으로 remote를 추가한 후 /orchestrate를 재실행하세요:"
-  echo "  git remote add origin <repo-url>"
-  exit 1
+if git remote -v | grep -q origin; then
+  # work 브랜치 없으면 생성
+  git fetch origin
+  if ! git branch -a | grep -q "remotes/origin/work"; then
+    git checkout -b work
+    git push -u origin work
+    git checkout {branch}
+  fi
+
+  # feature 브랜치를 work에 머지
+  git checkout work
+  git pull origin work
+  git merge {branch} --no-ff -m "merge: {type}({scope}): {description}"
+  git push origin work
+
+  # feature 브랜치로 복귀
+  git checkout {branch}
+else
+  echo "⚠️ git remote 없음. 로컬 커밋만 완료."
 fi
-
-# work 브랜치 없으면 생성
-if ! git ls-remote --heads origin work | grep -q work; then
-  git push origin HEAD:refs/heads/work
-fi
-
-git push -u origin {branch}
-
-gh pr create --title "{type}({scope}): {description}" --base work --body "$(cat <<'EOF'
-<!-- 작성 규칙:
-- 모든 {placeholder}를 실제 값으로 치환
-- 해당 없는 선택 섹션은 제거 (빈 섹션 남기지 말 것)
--->
-
-## 개요
-{이 PR이 왜 필요한지 1-2문장}
-
-## 주요 변경사항
-
-### 신규 파일
-| 파일 | 레이어 | 역할 |
-|------|--------|------|
-| `src/path/to/entity.ts` | Domain | {역할 설명} |
-| `src/path/to/use-case.ts` | Application | {역할 설명} |
-
-### 수정 파일
-| 파일 | 변경 내용 |
-|------|----------|
-| `src/path/to/module.ts` | {무엇을 왜 변경했는지} |
-
-## 핵심 구현
-{가장 중요한 구현 결정 2-3가지를 코드 스니펫과 함께 설명.
-Entity 설계, Use Case 흐름, DB 스키마 중 핵심만.}
-
-## API 스펙
-
-| Method | Path | 성공 | 에러 |
-|--------|------|------|------|
-| `{METHOD}` | `/api/v1/{resource}` | `{status}` | 400, 401, 404, 409 |
-
-## DB 변경사항 (해당 시)
-{신규 테이블/컬럼, 인덱스 전략, 마이그레이션 주의사항을 간결하게}
-
-## 에이전트 리뷰 결과
-| 에이전트 | 결과 | 주요 지적 |
-|---------|------|----------|
-| Code Review | {PASS/이슈 N건} | {요약} |
-| Convention | {PASS/이슈 N건} | {요약} |
-| Security | {PASS/이슈 N건 또는 N/A} | {요약} |
-| Database | {PASS/이슈 N건 또는 N/A} | {요약} |
-| NestJS Pattern | {PASS/이슈 N건 또는 N/A} | {요약} |
-
-<!-- Full 모드에서만 포함 — Standard 모드이면 이 섹션 제거 -->
-## [Full] Round 2 재검증 결과
-| 에이전트 | 결과 | 비고 |
-|---------|------|------|
-| Code Review | {PASS/이슈 N건} | 수정이 새 문제를 만들지 않았는지 |
-| Convention | {PASS/이슈 N건} | 수정이 컨벤션을 깨지 않았는지 |
-| {Round 1 최다 이슈 에이전트} | {PASS/이슈 N건} | 이슈가 실제로 해결됐는지 |
-
-## 테스트
-- [x] `${pm} biome check` 통과
-- [x] `${pm} build` 통과
-- [x] E2E 테스트 ({N}개 케이스: 성공 + 400/401/404/409)
-- [x] 기존 테스트 통과
-
-## 참고사항
-- {리뷰어가 알아야 할 컨텍스트, 트레이드오프, 후속 작업}
-EOF
-)"
 ```
+
+> **PR 없음.** feature 브랜치를 `work`에 직접 머지.
+> orchestrate로 만든 작업은 전부 `work`에 모임 → 일괄 테스트 → 배포 브랜치로 머지.
 
 ### 4-5. Jira 상태 변경 (Jira 모드)
 

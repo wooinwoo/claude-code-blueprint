@@ -95,7 +95,7 @@ Phase 3: Develop       → 워크트리에서 구현
                          ↓ 자동 연결
 Phase 4: PR            → 검증 → 에이전트 리뷰 → 커밋 → PR 생성
                          ■ 여기서 정지 (리뷰 대기)
-Phase 5: Feedback      → PR 코멘트 반영 (반복)   ← /orchestrate 수동 호출
+Phase 5: 추가 수정     → 필요 시 수정 후 work에 재머지
 Phase 6: Clean         → PR 병합 확인 → 워크트리/브랜치 삭제
 ```
 
@@ -1048,78 +1048,33 @@ git add {specific files}
 git commit -m "{type}({scope}): {description}"
 ```
 
-### 4-4. PR 생성
+### 4-4. work 브랜치에 머지
 
 ```bash
-# remote 있으면 push + PR (타겟: work 브랜치)
 if git remote -v | grep -q origin; then
   # work 브랜치 없으면 생성
-  if ! git ls-remote --heads origin work | grep -q work; then
-    git push origin HEAD:refs/heads/work
+  git fetch origin
+  if ! git branch -a | grep -q "remotes/origin/work"; then
+    git checkout -b work
+    git push -u origin work
+    git checkout {branch}
   fi
 
-  git push -u origin {branch}
+  # feature 브랜치를 work에 머지
+  git checkout work
+  git pull origin work
+  git merge {branch} --no-ff -m "merge: {type}({scope}): {description}"
+  git push origin work
 
-  gh pr create --title "{type}({scope}): {description}" --base work --body "$(cat <<'EOF'
-<!-- 작성 규칙:
-- 모든 {placeholder}를 실제 값으로 치환
-- 해당 없는 선택 섹션은 제거 (빈 섹션 남기지 말 것)
--->
-
-## 개요
-{이 PR이 왜 필요한지 1-2문장}
-
-## 주요 변경사항
-
-### 신규 파일
-| 파일 | 역할 |
-|------|------|
-| `src/path/to/Component.tsx` | {역할 설명} |
-
-### 수정 파일
-| 파일 | 변경 내용 |
-|------|----------|
-| `src/path/to/existing.tsx` | {무엇을 왜 변경했는지} |
-
-## 핵심 구현
-{가장 중요한 구현 결정 2-3가지를 코드 스니펫과 함께 설명.
-컴포넌트 구조, 커스텀 훅, 데이터 흐름 중 핵심만.}
-
-## 에이전트 리뷰 결과
-| 에이전트 | 결과 | 주요 지적 |
-|---------|------|----------|
-| Code Review | {PASS/이슈 N건} | {요약} |
-| Convention | {PASS/이슈 N건} | {요약} |
-| Security | {PASS/이슈 N건 또는 N/A} | {요약} |
-| Performance | {PASS/이슈 N건 또는 N/A} | {요약} |
-| React Pattern | {PASS/이슈 N건 또는 N/A} | {요약} |
-
-<!-- Full 모드에서만 포함 — Standard 모드이면 이 섹션 제거 -->
-## [Full] Round 2 재검증 결과
-| 에이전트 | 결과 | 비고 |
-|---------|------|------|
-| Code Review | {PASS/이슈 N건} | 수정이 새 문제를 만들지 않았는지 |
-| Convention | {PASS/이슈 N건} | 수정이 컨벤션을 깨지 않았는지 |
-| {Round 1 최다 이슈 에이전트} | {PASS/이슈 N건} | 이슈가 실제로 해결됐는지 |
-
-## 테스트
-- [x] lint 통과
-- [x] build 통과
-- [x] test 통과
-
-### 수동 테스트 체크리스트
-- [ ] 데스크톱 (Chrome)
-- [ ] 모바일 (iOS Safari)
-- [ ] 반응형 (768px, 1440px)
-
-## 참고사항
-- {리뷰어가 알아야 할 컨텍스트, 트레이드오프, 후속 작업}
-EOF
-)"
+  # feature 브랜치로 복귀
+  git checkout {branch}
 else
-  echo "⚠️ git remote 없음. 로컬 커밋만 완료. push/PR은 remote 설정 후 수동으로."
+  echo "⚠️ git remote 없음. 로컬 커밋만 완료."
 fi
 ```
+
+> **PR 없음.** feature 브랜치를 `work`에 직접 머지.
+> orchestrate로 만든 작업은 전부 `work`에 모임 → 일괄 테스트 → 배포 브랜치로 머지.
 
 **여기서 정지. 리뷰 대기. (remote 없으면 로컬 커밋 상태로 종료)**
 
