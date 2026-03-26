@@ -7,7 +7,7 @@ import { homedir, platform } from 'os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CCB_ROOT = resolve(__dirname, '..');
-const PORT = 3847;
+const PORT = 3850;
 const PROFILES = ['react-next', 'nestjs', 'fullstack', 'java-web', 'designer', 'planner'];
 
 // ============================================================
