@@ -245,6 +245,28 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  if (url.pathname === '/api/switch-branch' && req.method === 'POST') {
+    const body = await getBody(req);
+    const { path: projectPath, branch } = JSON.parse(body);
+    try {
+      // stash if dirty
+      const status = execSync('git status --porcelain', { cwd: projectPath, encoding: 'utf8' }).trim();
+      if (status) {
+        execSync('git stash', { cwd: projectPath, encoding: 'utf8', timeout: 10000 });
+      }
+      execSync(`git checkout ${branch}`, { cwd: projectPath, encoding: 'utf8', timeout: 10000 });
+      if (status) {
+        try { execSync('git stash pop', { cwd: projectPath, encoding: 'utf8', timeout: 10000 }); } catch {}
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, branch }));
+    } catch (e) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: e.message }));
+    }
+    return;
+  }
+
   if (url.pathname === '/api/install' && req.method === 'POST') {
     const body = await getBody(req);
     const { path: projectPath, profile } = JSON.parse(body);

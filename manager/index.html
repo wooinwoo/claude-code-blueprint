@@ -172,6 +172,12 @@ function render() {
         ${p.lastCommit ? `<div class="meta-item">${esc(p.lastCommit)}</div>` : ''}
       </div>
       ${p.tech.length ? `<div class="card-tech">${p.tech.map(t => `<span class="tech-badge">${t}</span>`).join('')}</div>` : ''}
+      <div class="card-branch">
+        <label style="font-size:11px;color:#666;">Branch:</label>
+        <select class="branch-select" onchange="switchBranch('${esc(p.path)}', this.value)" style="padding:3px 6px;border:1px solid #2e2e4a;border-radius:4px;background:#0f0f1a;color:#22c55e;font-size:12px;font-family:monospace;">
+          ${p.branches.map(b => `<option value="${b}" ${b === p.branch ? 'selected' : ''}>${b}</option>`).join('')}
+        </select>
+      </div>
       <div class="card-actions">
         <button class="btn btn-sm" onclick="openInstall('${esc(p.path)}', '${p.profile || 'react-next'}')">${p.profile ? 'Change Profile' : 'Install'}</button>
         ${p.profile ? `<button class="btn btn-sm btn-danger" onclick="doUninstall('${esc(p.path)}')">Uninstall</button>` : ''}
@@ -223,6 +229,22 @@ async function doUninstall(path) {
     refresh();
   } else {
     showToast(`Uninstall failed: ${result.error}`, 'error');
+  }
+}
+
+async function switchBranch(path, branch) {
+  showToast(`Switching to ${branch}...`, '');
+  const res = await fetch('/api/switch-branch', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path, branch })
+  });
+  const result = await res.json();
+  if (result.success) {
+    showToast(`Switched to ${branch}`, 'success');
+    refresh();
+  } else {
+    showToast(`Switch failed: ${result.error}`, 'error');
   }
 }
 
