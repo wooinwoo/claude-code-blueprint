@@ -162,14 +162,14 @@ function getProjectInfo(dir) {
 
 function installProfile(projectPath, profile) {
   const os = platform();
-  const setupScript = join(CCB_ROOT, 'setup.ps1');
 
   let cmd;
   if (os === 'win32') {
-    cmd = `powershell -File "${setupScript}" ${profile} "${projectPath}"`;
+    const ps1 = join(CCB_ROOT, 'setup.ps1');
+    cmd = `powershell -File "${ps1}" ${profile} "${projectPath}"`;
   } else {
-    // macOS/Linux — PowerShell Core 또는 bash fallback
-    cmd = `pwsh -File "${setupScript}" ${profile} "${projectPath}" 2>/dev/null || echo "PowerShell not available"`;
+    const sh = join(CCB_ROOT, 'setup.sh');
+    cmd = `bash "${sh}" ${profile} "${projectPath}"`;
   }
 
   try {
