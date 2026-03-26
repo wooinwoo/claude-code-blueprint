@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCB Manager</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font: 14px/1.6 'Pretendard', -apple-system, system-ui, sans-serif; background: #0f0f1a; color: #e0e0e0; }
+
+  .header { padding: 20px 32px; border-bottom: 1px solid #1e1e35; display: flex; align-items: center; justify-content: space-between; }
+  .header h1 { font-size: 18px; font-weight: 700; color: #fff; }
+  .header h1 span { color: #6366f1; }
+  .header-actions { display: flex; gap: 8px; }
+
+  .btn { padding: 6px 14px; border: 1px solid #2e2e4a; border-radius: 6px; background: #1a1a2e; color: #e0e0e0; cursor: pointer; font-size: 13px; transition: all .15s; }
+  .btn:hover { background: #252542; border-color: #6366f1; }
+  .btn-primary { background: #6366f1; border-color: #6366f1; color: #fff; }
+  .btn-primary:hover { background: #5558e6; }
+  .btn-danger { border-color: #ef4444; color: #ef4444; }
+  .btn-danger:hover { background: #ef44441a; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+  .container { padding: 24px 32px; }
+
+  .stats { display: flex; gap: 16px; margin-bottom: 24px; }
+  .stat { background: #1a1a2e; border: 1px solid #1e1e35; border-radius: 8px; padding: 16px 20px; flex: 1; }
+  .stat-value { font-size: 28px; font-weight: 700; color: #fff; }
+  .stat-label { font-size: 12px; color: #888; margin-top: 2px; }
+
+  .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; }
+
+  .project-card { background: #1a1a2e; border: 1px solid #1e1e35; border-radius: 10px; padding: 20px; transition: border-color .15s; }
+  .project-card:hover { border-color: #2e2e4a; }
+  .project-card.installed { border-left: 3px solid #6366f1; }
+  .project-card.not-installed { border-left: 3px solid #444; opacity: 0.7; }
+
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .card-name { font-size: 15px; font-weight: 600; color: #fff; }
+  .card-path { font-size: 11px; color: #666; margin-top: 2px; word-break: break-all; }
+  .card-profile { background: #6366f11a; color: #6366f1; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .card-profile.none { background: #4441; color: #666; }
+
+  .card-meta { display: flex; gap: 12px; margin: 10px 0; flex-wrap: wrap; }
+  .meta-item { font-size: 12px; color: #888; }
+  .meta-item strong { color: #bbb; }
+
+  .card-tech { display: flex; gap: 4px; margin: 8px 0; flex-wrap: wrap; }
+  .tech-badge { background: #252542; color: #aaa; padding: 2px 6px; border-radius: 3px; font-size: 10px; }
+
+  .card-actions { display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+
+  .modal-overlay { position: fixed; inset: 0; background: #000a; display: none; align-items: center; justify-content: center; z-index: 100; }
+  .modal-overlay.active { display: flex; }
+  .modal { background: #1a1a2e; border: 1px solid #2e2e4a; border-radius: 12px; padding: 24px; min-width: 400px; max-width: 500px; }
+  .modal h2 { font-size: 16px; margin-bottom: 16px; color: #fff; }
+  .modal label { display: block; font-size: 12px; color: #888; margin-bottom: 4px; margin-top: 12px; }
+  .modal select, .modal input, .modal textarea { width: 100%; padding: 8px 12px; border: 1px solid #2e2e4a; border-radius: 6px; background: #0f0f1a; color: #e0e0e0; font-size: 13px; }
+  .modal textarea { height: 60px; resize: vertical; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+  .toast { position: fixed; bottom: 20px; right: 20px; background: #252542; border: 1px solid #2e2e4a; border-radius: 8px; padding: 12px 20px; font-size: 13px; z-index: 200; display: none; }
+  .toast.success { border-color: #22c55e; color: #22c55e; }
+  .toast.error { border-color: #ef4444; color: #ef4444; }
+  .toast.active { display: block; }
+
+  .loading { text-align: center; padding: 60px; color: #666; }
+  .spinner { display: inline-block; width: 24px; height: 24px; border: 2px solid #333; border-top-color: #6366f1; border-radius: 50%; animation: spin .6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg) } }
+
+  .uncommitted { color: #f59e0b; }
+  .branch-name { color: #22c55e; font-family: monospace; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>CCB</span> Manager</h1>
+  <div class="header-actions">
+    <button class="btn" onclick="refresh()">Refresh</button>
+    <button class="btn btn-primary" onclick="updateAll()">Update All</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="stats">
+    <div class="stat"><div class="stat-value" id="totalProjects">-</div><div class="stat-label">Projects</div></div>
+    <div class="stat"><div class="stat-value" id="installedCount">-</div><div class="stat-label">CCB Installed</div></div>
+    <div class="stat"><div class="stat-value" id="notInstalledCount">-</div><div class="stat-label">Not Installed</div></div>
+    <div class="stat"><div class="stat-value" id="uncommittedCount">-</div><div class="stat-label">Uncommitted</div></div>
+  </div>
+
+  <div id="projectGrid" class="project-grid">
+    <div class="loading"><div class="spinner"></div><p style="margin-top:12px">Scanning projects...</p></div>
+  </div>
+</div>
+
+<!-- Install Modal -->
+<div class="modal-overlay" id="installModal">
+  <div class="modal">
+    <h2>Install CCB Profile</h2>
+    <label>Project</label>
+    <input id="installPath" readonly>
+    <label>Profile</label>
+    <select id="installProfile">
+      <option value="react-next">react-next</option>
+      <option value="nestjs">nestjs</option>
+      <option value="fullstack">fullstack</option>
+      <option value="java-web">java-web</option>
+      <option value="designer">designer</option>
+      <option value="planner">planner</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('installModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="doInstall()">Install</button>
+    </div>
+  </div>
+</div>
+
+<!-- Commit Modal -->
+<div class="modal-overlay" id="commitModal">
+  <div class="modal">
+    <h2>Commit & Push</h2>
+    <label>Project</label>
+    <input id="commitPath" readonly>
+    <label>Branch</label>
+    <select id="commitBranch"></select>
+    <label>Commit Message</label>
+    <textarea id="commitMessage">chore: update CCB settings</textarea>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('commitModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="doCommit()">Commit & Push</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let projects = [];
+
+async function refresh() {
+  document.getElementById('projectGrid').innerHTML = '<div class="loading"><div class="spinner"></div><p style="margin-top:12px">Scanning projects...</p></div>';
+  const res = await fetch('/api/projects');
+  projects = await res.json();
+  render();
+}
+
+function render() {
+  const installed = projects.filter(p => p.profile);
+  const notInstalled = projects.filter(p => !p.profile);
+  const uncommitted = projects.filter(p => p.uncommitted > 0);
+
+  document.getElementById('totalProjects').textContent = projects.length;
+  document.getElementById('installedCount').textContent = installed.length;
+  document.getElementById('notInstalledCount').textContent = notInstalled.length;
+  document.getElementById('uncommittedCount').textContent = uncommitted.length;
+
+  const grid = document.getElementById('projectGrid');
+  grid.innerHTML = projects.map(p => `
+    <div class="project-card ${p.profile ? 'installed' : 'not-installed'}">
+      <div class="card-header">
+        <div>
+          <div class="card-name">${esc(p.name)}</div>
+          <div class="card-path">${esc(p.path)}</div>
+        </div>
+        <div class="card-profile ${p.profile ? '' : 'none'}">${p.profile || 'not installed'}</div>
+      </div>
+      <div class="card-meta">
+        <div class="meta-item"><strong>Branch:</strong> <span class="branch-name">${esc(p.branch || '-')}</span></div>
+        ${p.uncommitted > 0 ? `<div class="meta-item uncommitted">${p.uncommitted} uncommitted</div>` : ''}
+        ${p.lastCommit ? `<div class="meta-item">${esc(p.lastCommit)}</div>` : ''}
+      </div>
+      ${p.tech.length ? `<div class="card-tech">${p.tech.map(t => `<span class="tech-badge">${t}</span>`).join('')}</div>` : ''}
+      <div class="card-actions">
+        <button class="btn btn-sm" onclick="openInstall('${esc(p.path)}', '${p.profile || 'react-next'}')">${p.profile ? 'Change Profile' : 'Install'}</button>
+        ${p.profile ? `<button class="btn btn-sm btn-danger" onclick="doUninstall('${esc(p.path)}')">Uninstall</button>` : ''}
+        ${p.remote ? `<button class="btn btn-sm" onclick="openCommit('${esc(p.path)}')">Commit & Push</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function openInstall(path, profile) {
+  document.getElementById('installPath').value = path;
+  document.getElementById('installProfile').value = profile;
+  document.getElementById('installModal').classList.add('active');
+}
+
+async function doInstall() {
+  const path = document.getElementById('installPath').value;
+  const profile = document.getElementById('installProfile').value;
+  closeModal('installModal');
+  showToast(`Installing ${profile}...`, '');
+
+  const res = await fetch('/api/install', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path, profile })
+  });
+  const result = await res.json();
+
+  if (result.success) {
+    showToast(`${profile} installed!`, 'success');
+    refresh();
+  } else {
+    showToast(`Install failed: ${result.error}`, 'error');
+  }
+}
+
+async function doUninstall(path) {
+  if (!confirm('Remove .claude/ from this project?')) return;
+
+  const res = await fetch('/api/uninstall', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path })
+  });
+  const result = await res.json();
+
+  if (result.success) {
+    showToast('Uninstalled', 'success');
+    refresh();
+  } else {
+    showToast(`Uninstall failed: ${result.error}`, 'error');
+  }
+}
+
+async function openCommit(path) {
+  document.getElementById('commitPath').value = path;
+  document.getElementById('commitMessage').value = 'chore: update CCB settings';
+
+  const res = await fetch('/api/branches', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path })
+  });
+  const { branches, current } = await res.json();
+
+  const select = document.getElementById('commitBranch');
+  select.innerHTML = branches.map(b => `<option value="${b}" ${b === current ? 'selected' : ''}>${b}</option>`).join('');
+
+  document.getElementById('commitModal').classList.add('active');
+}
+
+async function doCommit() {
+  const path = document.getElementById('commitPath').value;
+  const branch = document.getElementById('commitBranch').value;
+  const message = document.getElementById('commitMessage').value;
+  closeModal('commitModal');
+  showToast('Committing...', '');
+
+  const res = await fetch('/api/commit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path, branch, message })
+  });
+  const result = await res.json();
+
+  if (result.success) {
+    showToast(result.message || 'Committed & pushed!', 'success');
+    refresh();
+  } else {
+    showToast(`Commit failed: ${result.error}`, 'error');
+  }
+}
+
+async function updateAll() {
+  if (!confirm('Update all installed projects?')) return;
+  showToast('Updating all...', '');
+
+  const res = await fetch('/api/update-all', { method: 'POST' });
+  const results = await res.json();
+
+  const success = results.filter(r => r.success).length;
+  const failed = results.filter(r => !r.success).length;
+  showToast(`Updated: ${success} success, ${failed} failed`, success > 0 ? 'success' : 'error');
+  refresh();
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+function showToast(msg, type) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = `toast active ${type}`;
+  if (type) setTimeout(() => toast.classList.remove('active'), 3000);
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// 모달 외부 클릭으로 닫기
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('active'); });
+});
+
+// 시작
+refresh();
+</script>
+</body>
+</html>
