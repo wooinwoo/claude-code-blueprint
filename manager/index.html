@@ -77,6 +77,17 @@
 <div class="header">
   <h1><span>CCB</span> Manager</h1>
   <div class="header-actions">
+    <input type="text" id="searchInput" placeholder="Search projects..." oninput="render()" style="padding:6px 12px;border:1px solid #2e2e4a;border-radius:6px;background:#0f0f1a;color:#e0e0e0;font-size:13px;width:200px;">
+    <select id="filterProfile" onchange="render()" style="padding:6px 8px;border:1px solid #2e2e4a;border-radius:6px;background:#0f0f1a;color:#e0e0e0;font-size:13px;">
+      <option value="all">All</option>
+      <option value="installed">Installed</option>
+      <option value="not-installed">Not Installed</option>
+      <option value="react-next">react-next</option>
+      <option value="nestjs">nestjs</option>
+      <option value="fullstack">fullstack</option>
+      <option value="designer">designer</option>
+      <option value="planner">planner</option>
+    </select>
     <button class="btn" onclick="refresh()">Refresh</button>
     <button class="btn btn-primary" onclick="updateAll()">Update All</button>
   </div>
@@ -147,6 +158,22 @@ async function refresh() {
 }
 
 function render() {
+  const search = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  const filter = document.getElementById('filterProfile')?.value || 'all';
+
+  let filtered = projects;
+  if (search) filtered = filtered.filter(p => p.name.toLowerCase().includes(search) || p.path.toLowerCase().includes(search));
+  if (filter === 'installed') filtered = filtered.filter(p => p.profile);
+  else if (filter === 'not-installed') filtered = filtered.filter(p => !p.profile);
+  else if (filter !== 'all') filtered = filtered.filter(p => p.profile === filter);
+
+  // 정렬: CCB 설치된 것 먼저, 그 다음 이름순
+  filtered.sort((a, b) => {
+    if (a.profile && !b.profile) return -1;
+    if (!a.profile && b.profile) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
   const installed = projects.filter(p => p.profile);
   const notInstalled = projects.filter(p => !p.profile);
   const uncommitted = projects.filter(p => p.uncommitted > 0);
@@ -157,11 +184,11 @@ function render() {
   document.getElementById('uncommittedCount').textContent = uncommitted.length;
 
   const grid = document.getElementById('projectGrid');
-  grid.innerHTML = projects.map(p => `
+  grid.innerHTML = filtered.map(p => `
     <div class="project-card ${p.profile ? 'installed' : 'not-installed'}">
       <div class="card-header">
         <div>
-          <div class="card-name">${esc(p.name)}</div>
+          <div class="card-name">${esc(p.name)} <span style="color:#555;font-size:12px;font-weight:400">${esc(p.path.split(/[/\\]/).slice(-2).join('/'))}</span></div>
           <div class="card-path">${esc(p.path)}</div>
         </div>
         <div class="card-profile ${p.profile ? '' : 'none'}">${p.profile || 'not installed'}</div>
