@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "identifier": "com.ccb.manager",
   "build": {
-    "frontendDist": "../",
+    "frontendDist": "../dist",
     "devUrl": "http://localhost:3850",
     "beforeDevCommand": "node server.js",
     "beforeBuildCommand": ""

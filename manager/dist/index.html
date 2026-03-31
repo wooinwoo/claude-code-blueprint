@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCB Manager</title>
+<style>
+  :root { --bg: #0a0a14; --surface: #12121f; --border: #1c1c30; --border-hover: #2e2e4a; --text: #e0e0e0; --text-dim: #666; --text-muted: #888; --primary: #6366f1; --primary-dim: #6366f11a; --success: #22c55e; --warning: #f59e0b; --danger: #ef4444; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font: 13px/1.5 'Pretendard', -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Header */
+  .header { position: sticky; top: 0; z-index: 50; padding: 14px 24px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 16px; }
+  .logo { font-size: 16px; font-weight: 700; white-space: nowrap; }
+  .logo span { color: var(--primary); }
+  .search { flex: 1; max-width: 300px; padding: 7px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 13px; outline: none; transition: border-color .15s; }
+  .search:focus { border-color: var(--primary); }
+  .filters { display: flex; gap: 4px; }
+  .filter-btn { padding: 5px 10px; border: 1px solid var(--border); border-radius: 5px; background: none; color: var(--text-muted); cursor: pointer; font-size: 11px; transition: all .15s; }
+  .filter-btn:hover { border-color: var(--border-hover); color: var(--text); }
+  .filter-btn.active { background: var(--primary-dim); border-color: var(--primary); color: var(--primary); }
+  .header-right { display: flex; gap: 6px; margin-left: auto; }
+
+  .btn { padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); cursor: pointer; font-size: 12px; transition: all .12s; white-space: nowrap; }
+  .btn:hover { border-color: var(--primary); background: var(--primary-dim); }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn-primary:hover { background: #5558e6; }
+  .btn-danger { border-color: var(--danger); color: var(--danger); }
+  .btn-danger:hover { background: #ef44441a; }
+  .btn-sm { padding: 3px 8px; font-size: 11px; }
+  .btn-icon { padding: 5px 8px; font-size: 14px; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* Stats */
+  .stats { display: flex; gap: 12px; padding: 16px 24px; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; flex: 1; cursor: pointer; transition: border-color .15s; }
+  .stat:hover { border-color: var(--border-hover); }
+  .stat.active { border-color: var(--primary); }
+  .stat-value { font-size: 24px; font-weight: 700; color: #fff; }
+  .stat-label { font-size: 11px; color: var(--text-muted); }
+
+  /* Table View */
+  .table-wrap { padding: 0 24px 24px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 8px 12px; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  tr:hover td { background: #ffffff06; }
+  tr.installed td:first-child { border-left: 3px solid var(--primary); }
+  tr.not-installed { opacity: .6; }
+  tr.not-installed:hover { opacity: .8; }
+
+  .profile-badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .profile-badge.active { background: var(--primary-dim); color: var(--primary); }
+  .profile-badge.none { background: #ffffff08; color: var(--text-dim); }
+  .branch-tag { color: var(--success); font-family: monospace; font-size: 12px; }
+  .uncommitted-tag { color: var(--warning); font-size: 11px; }
+  .tech-tag { display: inline-block; background: #ffffff08; color: var(--text-muted); padding: 1px 5px; border-radius: 3px; font-size: 10px; margin-right: 2px; }
+  .path-text { font-size: 11px; color: var(--text-dim); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .commit-text { font-size: 11px; color: var(--text-dim); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .row-actions { display: flex; gap: 4px; }
+
+  select.inline { padding: 3px 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--success); font-size: 11px; font-family: monospace; cursor: pointer; }
+  select.inline-profile { padding: 3px 6px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--primary); font-size: 11px; cursor: pointer; }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: #000b; display: none; align-items: center; justify-content: center; z-index: 100; }
+  .modal-overlay.active { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border-hover); border-radius: 12px; padding: 24px; min-width: 420px; max-width: 520px; }
+  .modal h2 { font-size: 15px; margin-bottom: 16px; color: #fff; }
+  .modal label { display: block; font-size: 11px; color: var(--text-muted); margin: 12px 0 4px; }
+  .modal input, .modal select, .modal textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); font-size: 13px; }
+  .modal textarea { height: 60px; resize: vertical; font-family: monospace; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 20px; right: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 18px; font-size: 13px; z-index: 200; transform: translateY(80px); opacity: 0; transition: all .25s ease; pointer-events: none; }
+  .toast.active { transform: translateY(0); opacity: 1; pointer-events: auto; }
+  .toast.success { border-color: var(--success); color: var(--success); }
+  .toast.error { border-color: var(--danger); color: var(--danger); }
+  .toast.info { border-color: var(--primary); color: var(--primary); }
+
+  .loading { text-align: center; padding: 60px; color: var(--text-dim); }
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .5s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg) } }
+
+  .empty { text-align: center; padding: 40px; color: var(--text-dim); }
+
+  @media (max-width: 768px) {
+    .header { flex-wrap: wrap; gap: 8px; }
+    .search { max-width: 100%; order: 10; }
+    .filters { order: 11; flex-wrap: wrap; }
+    .stats { flex-wrap: wrap; }
+    .stat { min-width: calc(50% - 8px); }
+    .table-wrap { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo"><span>CCB</span> Manager</div>
+  <input class="search" id="search" type="text" placeholder="Search..." oninput="render()">
+  <div class="filters">
+    <button class="filter-btn active" data-filter="all" onclick="setFilter(this)">All</button>
+    <button class="filter-btn" data-filter="installed" onclick="setFilter(this)">Installed</button>
+    <button class="filter-btn" data-filter="not-installed" onclick="setFilter(this)">Not Installed</button>
+    <button class="filter-btn" data-filter="uncommitted" onclick="setFilter(this)">Uncommitted</button>
+  </div>
+  <div class="header-right">
+    <button class="btn" onclick="refresh()">Refresh</button>
+    <button class="btn btn-primary" onclick="updateAll()">Update All</button>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat" onclick="setFilterByValue('all')"><div class="stat-value" id="sTotal">-</div><div class="stat-label">Total Projects</div></div>
+  <div class="stat" onclick="setFilterByValue('installed')"><div class="stat-value" id="sInstalled">-</div><div class="stat-label">CCB Installed</div></div>
+  <div class="stat" onclick="setFilterByValue('not-installed')"><div class="stat-value" id="sNot">-</div><div class="stat-label">Not Installed</div></div>
+  <div class="stat" onclick="setFilterByValue('uncommitted')"><div class="stat-value" id="sUncommitted">-</div><div class="stat-label">Uncommitted</div></div>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Project</th>
+        <th>Profile</th>
+        <th>Branch</th>
+        <th>Status</th>
+        <th>Tech</th>
+        <th>Last Commit</th>
+        <th style="text-align:right">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="tbody">
+      <tr><td colspan="7"><div class="loading"><div class="spinner"></div> Scanning...</div></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Commit Modal -->
+<div class="modal-overlay" id="commitModal">
+  <div class="modal">
+    <h2>Commit & Push</h2>
+    <label>Project</label>
+    <input id="cmPath" readonly style="color:var(--text-dim)">
+    <label>Branch</label>
+    <select id="cmBranch"></select>
+    <label>Commit Message</label>
+    <textarea id="cmMsg">chore: update CCB settings</textarea>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('commitModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="doCommit()">Commit & Push</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let projects = [];
+let currentFilter = 'all';
+const PROFILES = ['react-next','nestjs','fullstack','java-web','designer','planner'];
+
+async function refresh() {
+  document.getElementById('tbody').innerHTML = '<tr><td colspan="7"><div class="loading"><div class="spinner"></div> Scanning...</div></td></tr>';
+  const res = await fetch('/api/projects');
+  projects = await res.json();
+  render();
+}
+
+function setFilter(el) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  currentFilter = el.dataset.filter;
+  render();
+}
+
+function setFilterByValue(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.filter === f);
+  });
+  render();
+}
+
+function render() {
+  const q = document.getElementById('search').value.toLowerCase();
+  let list = projects;
+
+  if (q) list = list.filter(p => p.name.toLowerCase().includes(q) || p.path.toLowerCase().includes(q));
+  if (currentFilter === 'installed') list = list.filter(p => p.profile);
+  else if (currentFilter === 'not-installed') list = list.filter(p => !p.profile);
+  else if (currentFilter === 'uncommitted') list = list.filter(p => p.uncommitted > 0);
+
+  list.sort((a, b) => (b.profile ? 1 : 0) - (a.profile ? 1 : 0) || a.name.localeCompare(b.name));
+
+  document.getElementById('sTotal').textContent = projects.length;
+  document.getElementById('sInstalled').textContent = projects.filter(p => p.profile).length;
+  document.getElementById('sNot').textContent = projects.filter(p => !p.profile).length;
+  document.getElementById('sUncommitted').textContent = projects.filter(p => p.uncommitted > 0).length;
+
+  if (!list.length) {
+    document.getElementById('tbody').innerHTML = '<tr><td colspan="7"><div class="empty">No projects found</div></td></tr>';
+    return;
+  }
+
+  document.getElementById('tbody').innerHTML = list.map(p => {
+    const shortPath = p.path.replace(/\\/g,'/').split('/').slice(-3).join('/');
+    const profileOpts = PROFILES.map(pr => `<option value="${pr}" ${pr === p.profile ? 'selected' : ''}>${pr}</option>`).join('');
+    const branchOpts = p.branches.map(b => `<option value="${b}" ${b === p.branch ? 'selected' : ''}>${b}</option>`).join('');
+
+    return `<tr class="${p.profile ? 'installed' : 'not-installed'}">
+      <td>
+        <div style="font-weight:600;color:#fff">${esc(p.name)}</div>
+        <div class="path-text" title="${esc(p.path)}">${esc(shortPath)}</div>
+      </td>
+      <td>
+        <select class="inline-profile" onchange="doInstall('${esc(p.path)}', this.value)">
+          <option value="" ${!p.profile ? 'selected' : ''}>—</option>
+          ${profileOpts}
+        </select>
+      </td>
+      <td>
+        <select class="inline" onchange="switchBranch('${esc(p.path)}', this.value)">
+          ${branchOpts}
+        </select>
+      </td>
+      <td>
+        ${p.uncommitted > 0 ? `<span class="uncommitted-tag">${p.uncommitted} changes</span>` : '<span style="color:#333">clean</span>'}
+      </td>
+      <td>${p.tech.map(t => `<span class="tech-tag">${t}</span>`).join('')}</td>
+      <td><div class="commit-text" title="${esc(p.lastCommit)}">${esc(p.lastCommit || '-')}</div></td>
+      <td>
+        <div class="row-actions" style="justify-content:flex-end">
+          ${p.profile ? `<button class="btn btn-sm btn-danger" onclick="doUninstall('${esc(p.path)}')">Remove</button>` : ''}
+          ${p.remote ? `<button class="btn btn-sm" onclick="openCommit('${esc(p.path)}')">Push</button>` : ''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// === Actions ===
+
+async function doInstall(path, profile) {
+  if (!profile) return; // "—" selected
+  showToast(`Installing ${profile}...`, 'info');
+  const res = await fetch('/api/install', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({path, profile}) });
+  const r = await res.json();
+  showToast(r.success ? `${profile} installed` : `Failed: ${r.error}`, r.success ? 'success' : 'error');
+  refresh();
+}
+
+async function doUninstall(path) {
+  if (!confirm('Remove .claude/ ?')) return;
+  const res = await fetch('/api/uninstall', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({path}) });
+  const r = await res.json();
+  showToast(r.success ? 'Removed' : `Failed: ${r.error}`, r.success ? 'success' : 'error');
+  refresh();
+}
+
+async function switchBranch(path, branch) {
+  showToast(`Switching to ${branch}...`, 'info');
+  const res = await fetch('/api/switch-branch', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({path, branch}) });
+  const r = await res.json();
+  showToast(r.success ? `→ ${branch}` : `Failed: ${r.error}`, r.success ? 'success' : 'error');
+  refresh();
+}
+
+async function openCommit(path) {
+  document.getElementById('cmPath').value = path;
+  document.getElementById('cmMsg').value = 'chore: update CCB settings';
+  const res = await fetch('/api/branches', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({path}) });
+  const {branches, current} = await res.json();
+  document.getElementById('cmBranch').innerHTML = branches.map(b => `<option ${b===current?'selected':''}>${b}</option>`).join('');
+  document.getElementById('commitModal').classList.add('active');
+}
+
+async function doCommit() {
+  const path = document.getElementById('cmPath').value;
+  const branch = document.getElementById('cmBranch').value;
+  const message = document.getElementById('cmMsg').value;
+  closeModal('commitModal');
+  showToast('Pushing...', 'info');
+  const res = await fetch('/api/commit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({path, branch, message}) });
+  const r = await res.json();
+  showToast(r.success ? (r.message || 'Pushed!') : `Failed: ${r.error}`, r.success ? 'success' : 'error');
+  refresh();
+}
+
+async function updateAll() {
+  if (!confirm('Update all installed projects?')) return;
+  showToast('Updating...', 'info');
+  const res = await fetch('/api/update-all', { method: 'POST' });
+  const results = await res.json();
+  const ok = results.filter(r => r.success).length;
+  showToast(`${ok}/${results.length} updated`, ok > 0 ? 'success' : 'error');
+  refresh();
+}
+
+// === Utils ===
+
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+document.querySelectorAll('.modal-overlay').forEach(el => el.addEventListener('click', e => { if (e.target === el) el.classList.remove('active'); }));
+
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast active ${type||''}`;
+  clearTimeout(toastTimer);
+  if (type) toastTimer = setTimeout(() => t.classList.remove('active'), 3000);
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// Keyboard shortcut
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement.tagName !== 'INPUT') { e.preventDefault(); document.getElementById('search').focus(); }
+  if (e.key === 'Escape') { document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active')); }
+});
+
+refresh();
+</script>
+</body>
+</html>
