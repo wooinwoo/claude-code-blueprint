@@ -119,6 +119,21 @@ if (Test-Path $excludeFile) {
         }
     }
 
+    # scripts: nested path 단위 (예: hooks/pre-write-doc-warn.js)
+    # base/scripts/{hooks,lib} 안의 dead 파일 정리용
+    foreach ($scriptItem in $exclude.scripts) {
+        $src = Join-Path $CcbRoot "base\scripts\$scriptItem"
+        if (Test-Path $src) {
+            $dst = Join-Path $excludedDir "scripts\$scriptItem"
+            $dstParent = Split-Path $dst
+            if (-not (Test-Path $dstParent)) {
+                New-Item -ItemType Directory -Path $dstParent -Force | Out-Null
+            }
+            Move-Item $src $dst
+            $excludedCount++
+        }
+    }
+
     Write-Host ""
     Write-Host "  [EXCLUDE] $excludedCount items -> base/_excluded/" -ForegroundColor Yellow
 } else {

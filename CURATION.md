@@ -29,6 +29,11 @@ exclude.json 수정 시 이 문서를 참고한다.
 - 가볍고 항상 로딩되므로 웬만하면 다 유지
 - 미사용 언어(Go, Python, Swift)만 제외
 
+### Scripts
+- `base/hooks/hooks.json`이 참조하는 스크립트는 필수
+- 참조 없는 dead 파일(옛 이름의 잔재 등)은 제외
+- exclude.json `scripts` 키에 nested path로 명시 (예: `hooks/pre-write-doc-warn.js`)
+
 ## 제외 사유 분류
 
 | 코드 | 사유 | 예시 |
@@ -114,6 +119,11 @@ exclude.json 수정 시 이 문서를 참고한다.
 | cost-aware-llm-pipeline | niche — LLM 파이프라인 빌드 전용 |
 | regex-vs-llm-structured-text | niche |
 | security-scan | niche — AgentShield CI 전용 |
+
+### Scripts (1개)
+| 항목 | 사유 |
+|------|------|
+| hooks/pre-write-doc-warn.js | dup — doc-file-warning.js로 일원화됨 (hooks.json은 후자만 참조) |
 
 ## 지원 스택
 
